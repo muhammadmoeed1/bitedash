@@ -55,6 +55,8 @@ export interface ResourceConfig<TRecord = unknown, TCreate = unknown, TUpdate = 
   filterableFields?: readonly string[];
   /** Fields allowed in ?sort=field:asc|desc */
   sortableFields?: readonly string[];
+  /** Text fields matched case-insensitively (OR'd together) against ?search= */
+  searchableFields?: readonly string[];
   /** Default ordering applied when no ?sort= is given. */
   defaultSort?: Record<string, 'asc' | 'desc'>;
   /** Per-operation auth requirements for writes. Reads (list/getOne) are always public. */
@@ -62,5 +64,9 @@ export interface ResourceConfig<TRecord = unknown, TCreate = unknown, TUpdate = 
     create?: WriteProtection;
     update?: WriteProtection;
     remove?: WriteProtection;
+  };
+  /** Extra business-rule validation beyond Zod schema shape and ownership, run before create. */
+  hooks?: {
+    beforeCreate?: (data: unknown, actor: Actor | undefined) => Promise<void>;
   };
 }

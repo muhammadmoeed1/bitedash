@@ -77,6 +77,31 @@ via a small `protect: { create/update/remove: { roles, ownerField } }` config pe
 After seeding, demo accounts exist for every role (see `npm run seed` output for the full
 list) — all use the password `Password123!`.
 
+## Ordering Workflow
+
+Real order placement and lifecycle management live outside the generic CRUD engine, since
+they involve business rules a per-resource config can't express cleanly:
+
+| Endpoint | Who | Description |
+|---|---|---|
+| `POST /api/v1/orders/checkout` | customer | Places an order from a cart (`{ items: [{ item_id, quantity }] }`). Prices, availability, and single-restaurant-per-order are all re-validated server-side — client-sent prices/totals are never trusted. |
+| `PATCH /api/v1/orders/:order_id/status` | customer, restaurant_owner, admin | Transitions an order through its lifecycle (`placed → accepted → preparing → out_for_delivery → delivered`, or `→ cancelled`). Each role may only request specific target statuses on orders they own; illegal transitions (e.g. skipping straight to `delivered`) are rejected. |
+| `PATCH /api/v1/deliveries/:delivery_id/status` | delivery_agent, admin | Transitions a delivery (`assigned → picked_up → in_transit → delivered`, or `→ failed`) through its own state machine. Reaching `delivered` automatically syncs the parent order's status too. |
+| `GET /api/v1/restaurants/:restaurant_id/orders` | restaurant_owner (own restaurant), admin | Dashboard view of every order containing that restaurant's items, with customer/items/payment/delivery details joined in. |
+
+The state machines and role/ownership rules live in `backend/src/orders/order-status.ts`
+and the small services alongside it — kept as explicit, readable code rather than forced
+into the generic engine, since lifecycle transitions are exactly the kind of business logic
+that deserves to be visible, not abstracted away.
+
+Reviews are similarly gated by a business rule (not just CRUD validation): a customer can
+only review a restaurant they've had a `delivered` order from, enforced via a `beforeCreate`
+hook on the reviews resource config (`backend/src/resources/reviews.ts`).
+
+Restaurants and menu items also support free-text search via `?search=` (matched
+case-insensitively against name/description fields), in addition to the existing
+pagination/sorting/filtering.
+
 ## Getting Started
 
 ### Backend

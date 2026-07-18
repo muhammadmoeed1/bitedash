@@ -158,7 +158,7 @@ async function main() {
     { customer: sara, status: 'delivered', items: [menuItems[3], menuItems[5]], agent: agent2, deliveryStatus: 'delivered', paymentStatus: 'completed', paymentMethod: 'wallet' },
     { customer: hamza, status: 'out_for_delivery', items: [menuItems[6], menuItems[7]], agent: agent3, deliveryStatus: 'in_transit', paymentStatus: 'completed', paymentMethod: 'cash' },
     { customer: moeed, status: 'preparing', items: [menuItems[9]], agent: agent1, deliveryStatus: 'assigned', paymentStatus: 'pending', paymentMethod: 'card' },
-    { customer: ayesha, status: 'placed', items: [menuItems[1], menuItems[8]], agent: agent2, deliveryStatus: 'assigned', paymentStatus: 'pending', paymentMethod: 'cash' },
+    { customer: ayesha, status: 'placed', items: [menuItems[1], menuItems[2]], agent: agent2, deliveryStatus: 'assigned', paymentStatus: 'pending', paymentMethod: 'cash' },
     { customer: bilal, status: 'cancelled', items: [menuItems[10]], agent: agent3, deliveryStatus: 'failed', paymentStatus: 'refunded', paymentMethod: 'card' },
   ] as const;
 

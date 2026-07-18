@@ -2,9 +2,8 @@ import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 import { createCrudRouter } from '../core/router';
 import { PrismaDelegate, ResourceConfig } from '../core/types';
+import { DELIVERY_STATUSES } from '../orders/order-status';
 import type { deliveriesModel } from '../generated/prisma/models/deliveries';
-
-const DELIVERY_STATUSES = ['assigned', 'picked_up', 'in_transit', 'delivered', 'failed'] as const;
 
 const createSchema = z.object({
   order_id: z.coerce.number().int().positive(),
@@ -16,7 +15,10 @@ const createSchema = z.object({
     .optional(),
 });
 
-const updateSchema = createSchema.partial();
+// Status is intentionally excluded from generic updates — lifecycle changes must go through
+// PATCH /api/v1/deliveries/:delivery_id/status, which enforces the delivery state machine
+// and syncs the parent order's status.
+const updateSchema = createSchema.omit({ delivery_status: true }).partial();
 
 export type DeliveryCreate = z.infer<typeof createSchema>;
 export type DeliveryUpdate = z.infer<typeof updateSchema>;
@@ -34,8 +36,8 @@ const config: ResourceConfig<deliveriesModel, DeliveryCreate, DeliveryUpdate> = 
   protect: {
     // Dispatch (assigning an agent to an order) is admin-controlled.
     create: { roles: ['admin'] },
-    // A delivery agent may update only their own assigned delivery's status.
-    update: { roles: ['delivery_agent', 'admin'], ownerField: 'agent_id' },
+    // Non-status fields only — admin-only; agents update status via the dedicated endpoint.
+    update: { roles: ['admin'] },
     remove: { roles: ['admin'] },
   },
 };

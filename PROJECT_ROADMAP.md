@@ -96,16 +96,22 @@ deployed, well-engineered full-stack application that stands out on GitHub and a
 
 **Goal:** Move from "table CRUD dashboard" to a real food-ordering experience.
 
-- [ ] **Customer flow:** browse restaurants → view menu → add to cart → checkout → place order
-- [ ] **Cart** logic (client + server validation of prices/availability)
-- [ ] **Order lifecycle state machine:** `placed → accepted → preparing → out_for_delivery → delivered` (+ cancelled)
-- [ ] **Restaurant owner dashboard:** manage menu items, accept/update orders
-- [ ] **Delivery agent view:** assigned deliveries, update status
-- [ ] **Reviews & ratings** tied to completed orders (enforce the 1–5 constraint)
-- [ ] **Search & filter** restaurants/menu items
+- [x] **Customer flow:** browse restaurants → view menu → add to cart → checkout → place order (checkout endpoint validates prices/availability server-side; frontend cart UI is still pending the Phase 6 React rebuild)
+- [x] **Cart** logic (client + server validation of prices/availability) — server-side validation done via `POST /api/v1/orders/checkout`; enforces same-restaurant-per-order and item availability
+- [x] **Order lifecycle state machine:** `placed → accepted → preparing → out_for_delivery → delivered` (+ cancelled), enforced via `PATCH /api/v1/orders/:order_id/status`
+- [x] **Restaurant owner dashboard:** manage menu items (Phase 2), accept/update orders (`PATCH /orders/:id/status`), view all orders (`GET /restaurants/:id/orders`)
+- [x] **Delivery agent view:** assigned deliveries via existing `GET /deliveries?agent_id=`, update status via `PATCH /api/v1/deliveries/:delivery_id/status` (auto-syncs the parent order's status)
+- [x] **Reviews & ratings** tied to completed orders (enforce the 1–5 constraint, plus a business rule requiring a `delivered` order from that restaurant before reviewing)
+- [x] **Search & filter** restaurants/menu items — generic `?search=` support added to the CRUD engine (case-insensitive `contains` across configured text fields)
 
 **Deliverable:** An end-to-end ordering workflow with distinct role experiences.
-**CV impact:** "Designed an order lifecycle state machine driving distinct customer, restaurant, and delivery workflows."
+**CV impact:** "Designed an order lifecycle state machine driving distinct customer, restaurant, and delivery workflows, with server-side cart validation and automatic cross-entity status sync."
+
+**Notes:**
+- The order and delivery state machines (`backend/src/orders/order-status.ts`) are deliberately hand-written rather than folded into the generic CRUD engine — lifecycle transitions carry business rules (which role may request which target state, ownership, legal transitions) that are clearer as explicit code than as configuration.
+- Generic PATCH on `orders`/`deliveries` no longer accepts a `status`/`delivery_status` field — all lifecycle changes must go through the dedicated state-machine endpoints, closing off a bypass that would otherwise skip the transition rules.
+- An order is restricted to items from a single restaurant (enforced at checkout) — this matches how food delivery actually works and keeps the restaurant-orders dashboard query simple.
+- The original Phase 1 seed data had one order mixing items from two different restaurants (predating this rule); fixed during Phase 3 testing so seed data stays consistent with the new business rule.
 
 ---
 

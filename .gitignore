@@ -27,5 +27,8 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
+# Claude Code local state
+.claude/
+
 # Test coverage
 coverage/

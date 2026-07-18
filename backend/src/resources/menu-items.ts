@@ -27,6 +27,7 @@ const config: ResourceConfig<menu_itemsModel, MenuItemCreate, MenuItemUpdate> = 
   updateSchema,
   filterableFields: ['restaurant_id', 'category_id', 'availability'],
   sortableFields: ['item_id', 'item_name', 'price'],
+  searchableFields: ['item_name', 'description'],
   defaultSort: { item_id: 'asc' },
   protect: {
     create: { roles: ['restaurant_owner', 'admin'], ownerField: 'restaurant_id' },

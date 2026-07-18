@@ -8,6 +8,9 @@ import { logger } from './lib/logger';
 import { errorHandler, notFoundHandler } from './middleware/error-handler';
 import { apiRouter } from './resources';
 import { authRouter } from './auth/auth.routes';
+import { ordersWorkflowRouter } from './orders/orders-workflow.routes';
+import { deliveriesWorkflowRouter } from './orders/deliveries-workflow.routes';
+import { restaurantsWorkflowRouter } from './orders/restaurants-workflow.routes';
 
 export function createApp() {
   const app = express();
@@ -35,6 +38,13 @@ export function createApp() {
   });
 
   app.use('/api/v1/auth', authRouter);
+  // Workflow routes (checkout, status transitions, dashboards) are mounted at the same
+  // prefixes as the generic CRUD routers below; non-overlapping path shapes (e.g. /checkout,
+  // /:id/status, /:id/orders vs. the generic /, /:id) mean Express falls through cleanly
+  // from one to the other with no route conflicts.
+  app.use('/api/v1/orders', ordersWorkflowRouter);
+  app.use('/api/v1/deliveries', deliveriesWorkflowRouter);
+  app.use('/api/v1/restaurants', restaurantsWorkflowRouter);
   app.use('/api/v1', apiRouter);
 
   app.use(notFoundHandler);

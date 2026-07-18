@@ -52,7 +52,8 @@ export class CrudController<T, TCreate, TUpdate> {
     const { page, pageSize } = parsePagination(req);
     const { sortField, sortDirection } = parseSort(req);
     const filters = parseFilters(req, this.config.filterableFields ?? []);
-    const result = await this.service.list({ page, pageSize, sortField, sortDirection, filters });
+    const search = typeof req.query.search === 'string' ? req.query.search : undefined;
+    const result = await this.service.list({ page, pageSize, sortField, sortDirection, filters, search });
     res.json(result);
   };
 

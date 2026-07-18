@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 import { createCrudRouter } from '../core/router';
+import { HttpError } from '../core/http-error';
 import { PrismaDelegate, ResourceConfig } from '../core/types';
 import type { reviewsModel } from '../generated/prisma/models/reviews';
 
@@ -30,6 +31,23 @@ const config: ResourceConfig<reviewsModel, ReviewCreate, ReviewUpdate> = {
     create: { roles: ['customer', 'admin'], ownerField: 'customer_id' },
     update: { roles: ['customer', 'admin'], ownerField: 'customer_id' },
     remove: { roles: ['customer', 'admin'], ownerField: 'customer_id' },
+  },
+  hooks: {
+    // A customer may only review a restaurant they've actually had a completed order from.
+    beforeCreate: async (data, actor) => {
+      if (actor?.role === 'admin') return;
+      const { customer_id, restaurant_id } = data as ReviewCreate;
+      const deliveredOrder = await prisma.orders.findFirst({
+        where: {
+          customer_id,
+          status: 'delivered',
+          order_items: { some: { menu_items: { restaurant_id } } },
+        },
+      });
+      if (!deliveredOrder) {
+        throw new HttpError(422, 'You can only review a restaurant after a delivered order from them');
+      }
+    },
   },
 };
 

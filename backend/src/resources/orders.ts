@@ -2,9 +2,8 @@ import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 import { createCrudRouter } from '../core/router';
 import { PrismaDelegate, ResourceConfig } from '../core/types';
+import { ORDER_STATUSES } from '../orders/order-status';
 import type { ordersModel } from '../generated/prisma/models/orders';
-
-const ORDER_STATUSES = ['placed', 'accepted', 'preparing', 'out_for_delivery', 'delivered', 'cancelled'] as const;
 
 const createSchema = z.object({
   customer_id: z.coerce.number().int().positive(),
@@ -12,7 +11,9 @@ const createSchema = z.object({
   total_amount: z.coerce.number().nonnegative().optional(),
 });
 
-const updateSchema = createSchema.partial();
+// Status is intentionally excluded from generic updates — lifecycle changes must go through
+// PATCH /api/v1/orders/:order_id/status, which enforces the order state machine.
+const updateSchema = createSchema.omit({ status: true }).partial();
 
 export type OrderCreate = z.infer<typeof createSchema>;
 export type OrderUpdate = z.infer<typeof updateSchema>;
@@ -28,11 +29,12 @@ const config: ResourceConfig<ordersModel, OrderCreate, OrderUpdate> = {
   sortableFields: ['order_id', 'order_date', 'total_amount'],
   defaultSort: { order_id: 'desc' },
   protect: {
+    // Real order placement should go through POST /api/v1/orders/checkout, which validates
+    // prices/availability server-side; this generic create is kept for admin/testing use.
     create: { roles: ['customer', 'admin'], ownerField: 'customer_id' },
-    // NOTE: real status transitions (restaurant accepts, agent delivers) belong to a
-    // dedicated workflow once order placement/fulfillment is built out (see roadmap Phase 3);
-    // for now a customer may only update their own order (e.g. to cancel it).
-    update: { roles: ['customer', 'admin'], ownerField: 'customer_id' },
+    // Non-status fields only — admin-only, since customers/restaurants have no legitimate
+    // reason to edit an order's customer_id/total_amount after placement.
+    update: { roles: ['admin'] },
     remove: { roles: ['admin'] },
   },
 };

@@ -25,6 +25,7 @@ const config: ResourceConfig<restaurantsModel, RestaurantCreate, RestaurantUpdat
   updateSchema,
   filterableFields: [],
   sortableFields: ['restaurant_id', 'name'],
+  searchableFields: ['name', 'address'],
   defaultSort: { restaurant_id: 'asc' },
   protect: {
     // Onboarding a restaurant normally happens via /api/v1/auth/register (role: restaurant_owner).

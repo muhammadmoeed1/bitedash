@@ -10,6 +10,7 @@ export interface ListQuery {
   sortField?: string;
   sortDirection?: 'asc' | 'desc';
   filters: Record<string, unknown>;
+  search?: string;
 }
 
 export interface ListResult<T> {
@@ -30,7 +31,7 @@ export class CrudService<T, TCreate, TUpdate> {
         ? { [query.sortField]: query.sortDirection ?? 'asc' }
         : this.config.defaultSort;
 
-    const where = this.buildWhere(query.filters);
+    const where = this.buildWhere(query.filters, query.search);
     const skip = (query.page - 1) * query.pageSize;
 
     const [data, total] = await Promise.all([
@@ -49,12 +50,18 @@ export class CrudService<T, TCreate, TUpdate> {
     };
   }
 
-  private buildWhere(filters: Record<string, unknown>): Record<string, unknown> | undefined {
+  private buildWhere(filters: Record<string, unknown>, search?: string): Record<string, unknown> | undefined {
     const allowed = this.config.filterableFields ?? [];
     const where: Record<string, unknown> = {};
     for (const field of allowed) {
       if (filters[field] !== undefined) where[field] = filters[field];
     }
+
+    const searchable = this.config.searchableFields ?? [];
+    if (search && searchable.length) {
+      where.OR = searchable.map((field) => ({ [field]: { contains: search, mode: 'insensitive' } }));
+    }
+
     return Object.keys(where).length ? where : undefined;
   }
 
@@ -83,6 +90,7 @@ export class CrudService<T, TCreate, TUpdate> {
 
   async create(data: TCreate, actor?: Actor): Promise<T> {
     await this.enforceOwnership(this.config.protect?.create, actor, data);
+    await this.config.hooks?.beforeCreate?.(data, actor);
     try {
       return await this.repository.create(data);
     } catch (err) {
