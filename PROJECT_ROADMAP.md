@@ -33,13 +33,13 @@ deployed, well-engineered full-stack application that stands out on GitHub and a
 
 **Goal:** Get the project under version control, remove the security landmine, and set up a clean structure.
 
-- [ ] Initialize a git repository and make an initial commit of the current state
-- [ ] Add a proper `.gitignore` (node_modules, `.env`, build output, etc.)
-- [ ] **Remove the committed `.env` / DB credentials from the repo and rotate the Neon password** (secrets are currently in plaintext — treat them as compromised)
-- [ ] Add `.env.example` files documenting required variables (no real values)
-- [ ] Restructure into a clear layout (e.g. `backend/`, `frontend/`, `docs/`)
-- [ ] Add `LICENSE` (MIT is a safe default) and a minimal `README.md` placeholder
-- [ ] Create the GitHub repository and push
+- [x] Initialize a git repository and make an initial commit of the current state
+- [x] Add a proper `.gitignore` (node_modules, `.env`, build output, etc.)
+- [x] **Remove the committed `.env` / DB credentials from the repo and rotate the Neon password** (rotated on Neon dashboard, connection verified with new password)
+- [x] Add `.env.example` files documenting required variables (no real values)
+- [x] Restructure into a clear layout (e.g. `backend/`, `frontend/`, `docs/`)
+- [x] Add `LICENSE` (MIT is a safe default) and a minimal `README.md` placeholder
+- [x] Create the GitHub repository and push — live at https://github.com/muhammadmoeed1/bitedash
 
 **Deliverable:** A safe, versioned, well-organized repo.
 **Why it matters for CV/GitHub:** A clean commit history and no leaked secrets is table-stakes credibility.
