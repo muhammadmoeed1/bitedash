@@ -2,6 +2,7 @@ import { prisma } from '../lib/prisma';
 import { HttpError, NotFoundError } from '../core/http-error';
 import { resolveOwnedEntityId } from '../auth/ownership';
 import { Actor } from '../core/types';
+import { emitDeliveryStatus, emitOrderStatus } from '../realtime/events';
 import { canTransitionDelivery, canTransitionOrder, DeliveryStatus, orderStatusForDelivery, OrderStatus } from './order-status';
 
 export async function updateDeliveryStatus(actor: Actor, deliveryId: number, nextStatus: DeliveryStatus) {
@@ -27,6 +28,7 @@ export async function updateDeliveryStatus(actor: Actor, deliveryId: number, nex
     where: { delivery_id: deliveryId },
     data: { delivery_status: nextStatus },
   });
+  emitDeliveryStatus({ delivery_id: deliveryId, order_id: delivery.order_id, status: nextStatus });
 
   // Propagate to the parent order's lifecycle where applicable (e.g. delivered -> delivered).
   const syncedStatus = orderStatusForDelivery(nextStatus);
@@ -35,6 +37,7 @@ export async function updateDeliveryStatus(actor: Actor, deliveryId: number, nex
     const currentOrderStatus = (order?.status ?? 'placed') as OrderStatus;
     if (order && canTransitionOrder(currentOrderStatus, syncedStatus)) {
       await prisma.orders.update({ where: { order_id: delivery.order_id }, data: { status: syncedStatus } });
+      emitOrderStatus({ order_id: delivery.order_id, status: syncedStatus });
     }
   }
 

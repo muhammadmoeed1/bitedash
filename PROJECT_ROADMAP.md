@@ -139,13 +139,19 @@ deployed, well-engineered full-stack application that stands out on GitHub and a
 
 **Goal:** A live, dynamic feature that demos really well.
 
-- [ ] Add **WebSockets** (Socket.IO) server-side
-- [ ] Push live **order status updates** to the customer
-- [ ] Live **delivery tracking** (simulated location updates from the rider view are fine)
-- [ ] In-app **notifications** for status changes
+- [x] Add **WebSockets** (Socket.IO) server-side — attached to the same HTTP server, JWT-authenticated at handshake
+- [x] Push live **order status updates** to the customer — emitted from the order + delivery status services to the order's room
+- [x] Live **delivery tracking** — delivery agents stream GPS via a `delivery:location` socket event, re-broadcast to that order's room (authorized: an agent can only push for their own delivery)
+- [x] In-app **notifications** for status changes — order/delivery/payment status events all pushed to subscribers of the affected order
 
 **Deliverable:** Real-time updates without page refresh.
 **CV impact:** "Built real-time order tracking with WebSockets (Socket.IO)."
+
+**Notes:**
+- Architecture: a thin `backend/src/realtime/events.ts` holds the io reference + typed emit helpers; services import ONLY from there, never from socket.io directly. This keeps business logic decoupled from the transport and means the whole feature is a no-op (not a crash) if the socket server was never started.
+- Authorization: clients must present a valid access token to connect, and can only `subscribe:order` to orders they're party to (customer who placed it / restaurant owner with an item on it / assigned delivery agent / admin) — same ownership logic as the REST layer, in `backend/src/realtime/order-access.ts`.
+- Events: `order:status`, `delivery:status`, `delivery:location`, `payment:status`, all scoped to an `order:<id>` room.
+- Verified end-to-end with a temporary socket.io-client script: invalid token rejected at handshake, authorized subscribe accepted, unrelated customer refused, and a live `order:status` event received by the customer when the restaurant owner accepted the order. (`socket.io-client` is kept as a devDependency for future real-time tests.)
 
 ---
 

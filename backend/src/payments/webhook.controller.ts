@@ -4,7 +4,16 @@ import { prisma } from '../lib/prisma';
 import { env } from '../config/env';
 import { HttpError } from '../core/http-error';
 import { logger } from '../lib/logger';
+import { emitPaymentStatus } from '../realtime/events';
 import { requireStripe } from './stripe-client';
+
+/** Updates the payment matching a Stripe intent and pushes a live payment:status event. */
+async function applyPaymentStatus(intentId: string, status: 'completed' | 'failed'): Promise<void> {
+  const payment = await prisma.payments.findUnique({ where: { stripe_payment_intent_id: intentId } });
+  if (!payment) return;
+  await prisma.payments.update({ where: { payment_id: payment.payment_id }, data: { payment_status: status } });
+  emitPaymentStatus({ order_id: payment.order_id, payment_status: status });
+}
 
 /**
  * Stripe webhook receiver. Requires the RAW request body (see app.ts, where this route is
@@ -29,19 +38,11 @@ export const stripeWebhookController = async (req: Request, res: Response): Prom
 
   switch (event.type) {
     case 'payment_intent.succeeded': {
-      const intent = event.data.object as Stripe.PaymentIntent;
-      await prisma.payments.updateMany({
-        where: { stripe_payment_intent_id: intent.id },
-        data: { payment_status: 'completed' },
-      });
+      await applyPaymentStatus((event.data.object as Stripe.PaymentIntent).id, 'completed');
       break;
     }
     case 'payment_intent.payment_failed': {
-      const intent = event.data.object as Stripe.PaymentIntent;
-      await prisma.payments.updateMany({
-        where: { stripe_payment_intent_id: intent.id },
-        data: { payment_status: 'failed' },
-      });
+      await applyPaymentStatus((event.data.object as Stripe.PaymentIntent).id, 'failed');
       break;
     }
     default:

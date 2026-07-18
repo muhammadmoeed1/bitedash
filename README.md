@@ -19,6 +19,7 @@ full-stack application.
 - **Validation:** Zod
 - **Auth:** JWT (access + refresh tokens, rotation + revocation), bcrypt password hashing, role-based access control
 - **Payments:** Stripe (test mode) — PaymentIntents + webhook-driven confirmation + refunds
+- **Real-time:** Socket.IO — live order/delivery status + delivery location tracking
 - **Frontend:** HTML, CSS, JavaScript *(migrating to React + TypeScript — see roadmap)*
 
 ## Project Structure
@@ -126,6 +127,37 @@ are testable even without live keys. To enable real test-mode payments locally:
 # 2. Forward Stripe webhooks to your local server with the Stripe CLI:
 stripe listen --forward-to localhost:6006/api/v1/payments/webhook
 ```
+
+## Real-Time Tracking (Socket.IO)
+
+A Socket.IO server runs alongside the REST API on the same port, giving customers live order
+updates without polling. Clients authenticate at the WebSocket handshake with their JWT access
+token, then subscribe to the orders they're allowed to watch:
+
+```js
+import { io } from 'socket.io-client';
+
+const socket = io('http://localhost:6006', { auth: { token: accessToken } });
+
+// Subscribe to an order you're a party to (customer / restaurant owner / assigned agent / admin)
+socket.emit('subscribe:order', orderId, (res) => console.log(res)); // { ok: true } or { ok: false, error }
+
+socket.on('order:status', (e) => {/* { order_id, status } */});
+socket.on('delivery:status', (e) => {/* { delivery_id, order_id, status } */});
+socket.on('delivery:location', (e) => {/* { delivery_id, order_id, lat, lng, at } */});
+socket.on('payment:status', (e) => {/* { order_id, payment_status } */});
+
+// Delivery agents stream their live GPS for a delivery; the server re-broadcasts it to the
+// order's room (only the assigned agent — or an admin — is allowed to push):
+socket.emit('delivery:location', { delivery_id, lat, lng });
+```
+
+Events are scoped to an `order:<id>` room and pushed automatically whenever an order or
+delivery status changes (via the REST endpoints) or a Stripe payment is confirmed. Subscription
+authorization reuses the same ownership rules as the REST layer, so a customer can never watch
+another customer's order. The real-time layer is decoupled from business logic
+(`backend/src/realtime/events.ts`) — services just call typed emit helpers, so nothing breaks
+if sockets are disabled.
 
 ## Getting Started
 

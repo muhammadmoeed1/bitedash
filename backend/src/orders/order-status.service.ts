@@ -2,6 +2,7 @@ import { prisma } from '../lib/prisma';
 import { HttpError, NotFoundError } from '../core/http-error';
 import { resolveOwnedEntityId } from '../auth/ownership';
 import { Actor } from '../core/types';
+import { emitOrderStatus } from '../realtime/events';
 import { canTransitionOrder, OrderStatus } from './order-status';
 
 /** Target statuses each non-admin role may request via PATCH /orders/:order_id/status. */
@@ -41,5 +42,7 @@ export async function updateOrderStatus(actor: Actor, orderId: number, nextStatu
     throw new HttpError(409, `Cannot transition order from "${currentStatus}" to "${nextStatus}"`);
   }
 
-  return prisma.orders.update({ where: { order_id: orderId }, data: { status: nextStatus } });
+  const updated = await prisma.orders.update({ where: { order_id: orderId }, data: { status: nextStatus } });
+  emitOrderStatus({ order_id: orderId, status: nextStatus });
+  return updated;
 }
