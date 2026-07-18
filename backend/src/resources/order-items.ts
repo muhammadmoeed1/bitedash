@@ -26,6 +26,16 @@ const config: ResourceConfig<order_itemsModel, OrderItemCreate, OrderItemUpdate>
   filterableFields: ['order_id', 'item_id'],
   sortableFields: ['order_item_id'],
   defaultSort: { order_item_id: 'asc' },
+  protect: {
+    // NOTE: role-gated only (no per-row ownerField) — order_items has no customer_id of its
+    // own to check against; verifying it belongs to the caller's own order requires a join
+    // that the generic ownership check doesn't support yet. Revisit once order placement
+    // becomes a dedicated transactional endpoint (roadmap Phase 3), which will make raw
+    // writes to this resource largely internal anyway.
+    create: { roles: ['customer', 'admin'] },
+    update: { roles: ['customer', 'admin'] },
+    remove: { roles: ['customer', 'admin'] },
+  },
 };
 
 export const orderItemsRouter = createCrudRouter<order_itemsModel, OrderItemCreate, OrderItemUpdate>(config);

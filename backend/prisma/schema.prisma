@@ -7,6 +7,37 @@ datasource db {
   provider = "postgresql"
 }
 
+enum user_role {
+  customer
+  restaurant_owner
+  delivery_agent
+  admin
+}
+
+model users {
+  user_id        Int              @id @default(autoincrement())
+  email          String           @unique @db.VarChar(150)
+  password_hash  String           @db.VarChar(255)
+  role           user_role
+  created_at     DateTime         @default(now())
+  customer       customers?
+  restaurant     restaurants?
+  delivery_agent delivery_agents?
+  refresh_tokens refresh_tokens[]
+}
+
+model refresh_tokens {
+  token_id   Int       @id @default(autoincrement())
+  user_id    Int
+  token_hash String    @db.VarChar(255)
+  expires_at DateTime
+  revoked_at DateTime?
+  created_at DateTime  @default(now())
+  users      users     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+
 model addresses {
   address_id  Int        @id @default(autoincrement())
   customer_id Int?
@@ -22,6 +53,8 @@ model customers {
   name        String?     @db.VarChar(100)
   email       String?     @unique @db.VarChar(100)
   phone       String?     @db.VarChar(20)
+  user_id     Int?        @unique
+  users       users?      @relation(fields: [user_id], references: [user_id], onDelete: SetNull)
   addresses   addresses[]
   orders      orders[]
   reviews     reviews[]
@@ -42,6 +75,8 @@ model delivery_agents {
   name           String?      @db.VarChar(100)
   phone          String?      @db.VarChar(20)
   vehicle_number String?      @db.VarChar(50)
+  user_id        Int?         @unique
+  users          users?       @relation(fields: [user_id], references: [user_id], onDelete: SetNull)
   deliveries     deliveries[]
 }
 
@@ -112,6 +147,8 @@ model restaurants {
   email                 String?                 @db.VarChar(100)
   phone                 String?                 @db.VarChar(20)
   address               String?
+  owner_user_id         Int?                    @unique
+  owner                 users?                  @relation(fields: [owner_user_id], references: [user_id], onDelete: SetNull)
   menu_items            menu_items[]
   restaurant_categories restaurant_categories[]
   reviews               reviews[]

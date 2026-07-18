@@ -73,15 +73,22 @@ deployed, well-engineered full-stack application that stands out on GitHub and a
 
 **Goal:** Real users, real access control — the single biggest credibility upgrade.
 
-- [ ] User registration + login with **password hashing** (argon2 / bcrypt)
-- [ ] **JWT** access + refresh token flow
-- [ ] **Role-based access control**: customer, restaurant owner, delivery agent, admin
-- [ ] Auth middleware protecting routes by role
-- [ ] Ownership checks (a restaurant owner can only edit their own menu, etc.)
-- [ ] Password reset flow (optional, nice-to-have)
+- [x] User registration + login with **password hashing** (bcrypt via `bcryptjs`, 12 salt rounds)
+- [x] **JWT** access + refresh token flow (refresh tokens hashed and stored server-side for rotation/revocation, not purely stateless)
+- [x] **Role-based access control**: customer, restaurant owner, delivery agent, admin
+- [x] Auth middleware protecting routes by role (`requireAuth` + `requireRole`, admin always allowed)
+- [x] Ownership checks (a restaurant owner can only edit their own menu, a delivery agent only their own deliveries, etc.) — enforced generically via a `protect.ownerField` config per resource, not repeated per-route logic
+- [ ] Password reset flow (optional, nice-to-have — deferred, not blocking)
 
 **Deliverable:** Secure multi-role authentication system.
-**CV impact:** "Implemented JWT-based authentication with role-based access control across four user roles."
+**CV impact:** "Implemented JWT-based authentication with role-based access control and per-resource ownership enforcement across four user roles."
+
+**Notes:**
+- New `users` + `refresh_tokens` tables added via an additive migration (no changes to existing data); `customers`/`restaurants`/`delivery_agents` each gained a nullable FK back to `users` (`user_id` / `owner_user_id`) so an auth identity is separate from — but linked to — its business profile.
+- Admin accounts are intentionally **not** self-registerable via `/api/v1/auth/register` (only `customer`/`restaurant_owner`/`delivery_agent`) — seed script creates one admin account for testing.
+- Two resources (`order-items`, `payments`) currently have role-only protection without a per-row `ownerField`, since verifying they belong to the caller's own order requires a join the generic ownership check doesn't support yet. Revisit once Phase 3 makes order placement a dedicated transactional endpoint.
+- Reads (list/getOne) are public on every resource — matches typical food-delivery browsing UX (no login needed to browse restaurants/menus).
+- Demo accounts for all four roles are seeded by `npm run seed` (password `Password123!` for all) — see the seed script's console output for the full list.
 
 ---
 

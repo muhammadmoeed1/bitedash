@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
-import { z } from 'zod';
 import { CrudService } from './service';
-import { ValidationError } from './http-error';
 import { ResourceConfig } from './types';
+import { validate } from '../utils/validate';
 
 const MAX_PAGE_SIZE = 100;
 const DEFAULT_PAGE_SIZE = 20;
@@ -38,12 +37,6 @@ function parseKeyParams(keys: readonly string[], params: Request['params']): Rec
   return idParams;
 }
 
-function validate<T>(schema: z.ZodType<T>, body: unknown): T {
-  const result = schema.safeParse(body);
-  if (!result.success) throw new ValidationError(result.error.flatten());
-  return result.data;
-}
-
 /** Generic HTTP layer: parses the request, delegates to the service, and shapes the JSON response. */
 export class CrudController<T, TCreate, TUpdate> {
   private readonly keys: readonly string[];
@@ -71,20 +64,20 @@ export class CrudController<T, TCreate, TUpdate> {
 
   create = async (req: Request, res: Response): Promise<void> => {
     const payload = validate(this.config.createSchema, req.body);
-    const data = await this.service.create(payload);
+    const data = await this.service.create(payload, req.user);
     res.status(201).json({ data });
   };
 
   update = async (req: Request, res: Response): Promise<void> => {
     const idParams = parseKeyParams(this.keys, req.params);
     const payload = validate(this.config.updateSchema, req.body);
-    const data = await this.service.update(idParams, payload);
+    const data = await this.service.update(idParams, payload, req.user);
     res.json({ data });
   };
 
   remove = async (req: Request, res: Response): Promise<void> => {
     const idParams = parseKeyParams(this.keys, req.params);
-    await this.service.remove(idParams);
+    await this.service.remove(idParams, req.user);
     res.status(204).send();
   };
 }

@@ -28,6 +28,11 @@ const config: ResourceConfig<menu_itemsModel, MenuItemCreate, MenuItemUpdate> = 
   filterableFields: ['restaurant_id', 'category_id', 'availability'],
   sortableFields: ['item_id', 'item_name', 'price'],
   defaultSort: { item_id: 'asc' },
+  protect: {
+    create: { roles: ['restaurant_owner', 'admin'], ownerField: 'restaurant_id' },
+    update: { roles: ['restaurant_owner', 'admin'], ownerField: 'restaurant_id' },
+    remove: { roles: ['restaurant_owner', 'admin'], ownerField: 'restaurant_id' },
+  },
 };
 
 export const menuItemsRouter = createCrudRouter<menu_itemsModel, MenuItemCreate, MenuItemUpdate>(config);

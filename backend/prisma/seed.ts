@@ -1,11 +1,16 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/client';
+import { hashPassword } from '../src/auth/password';
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
+const DEMO_PASSWORD = 'Password123!';
+
 const SEQUENCES = [
+  'users_user_id_seq',
+  'refresh_tokens_token_id_seq',
   'customers_customer_id_seq',
   'addresses_address_id_seq',
   'restaurants_restaurant_id_seq',
@@ -34,6 +39,8 @@ async function clear() {
   await prisma.food_categories.deleteMany();
   await prisma.restaurants.deleteMany();
   await prisma.customers.deleteMany();
+  await prisma.refresh_tokens.deleteMany();
+  await prisma.users.deleteMany();
 
   for (const seq of SEQUENCES) {
     await prisma.$executeRawUnsafe(`ALTER SEQUENCE "${seq}" RESTART WITH 1`);
@@ -44,16 +51,28 @@ async function main() {
   console.log('Clearing existing data...');
   await clear();
 
+  const password_hash = await hashPassword(DEMO_PASSWORD);
+  const credentials: { role: string; email: string }[] = [];
+
+  console.log('Seeding admin account...');
+  await prisma.users.create({ data: { email: 'admin@bitedash.com', password_hash, role: 'admin' } });
+  credentials.push({ role: 'admin', email: 'admin@bitedash.com' });
+
   console.log('Seeding customers...');
+  const customerSeeds = [
+    { name: 'Ali Raza', email: 'ali.raza@example.com', phone: '03001234567' },
+    { name: 'Sara Khan', email: 'sara.khan@example.com', phone: '03007654321' },
+    { name: 'Hamza Bhatti', email: 'hamza.bhatti@example.com', phone: '03009876543' },
+    { name: 'Moeed Ahmed', email: 'moeed.ahmed@example.com', phone: '03001112223' },
+    { name: 'Ayesha Malik', email: 'ayesha.malik@example.com', phone: '03004445556' },
+    { name: 'Bilal Siddiqui', email: 'bilal.siddiqui@example.com', phone: '03007778889' },
+  ];
   const [ali, sara, hamza, moeed, ayesha, bilal] = await Promise.all(
-    [
-      { name: 'Ali Raza', email: 'ali.raza@example.com', phone: '03001234567' },
-      { name: 'Sara Khan', email: 'sara.khan@example.com', phone: '03007654321' },
-      { name: 'Hamza Bhatti', email: 'hamza.bhatti@example.com', phone: '03009876543' },
-      { name: 'Moeed Ahmed', email: 'moeed.ahmed@example.com', phone: '03001112223' },
-      { name: 'Ayesha Malik', email: 'ayesha.malik@example.com', phone: '03004445556' },
-      { name: 'Bilal Siddiqui', email: 'bilal.siddiqui@example.com', phone: '03007778889' },
-    ].map((data) => prisma.customers.create({ data })),
+    customerSeeds.map(async (data) => {
+      const user = await prisma.users.create({ data: { email: data.email, password_hash, role: 'customer' } });
+      credentials.push({ role: 'customer', email: data.email });
+      return prisma.customers.create({ data: { ...data, user_id: user.user_id } });
+    }),
   );
 
   console.log('Seeding addresses...');
@@ -69,13 +88,18 @@ async function main() {
   });
 
   console.log('Seeding restaurants...');
+  const restaurantSeeds = [
+    { name: 'Al Madina Grill', email: 'contact@almadinagrill.com', phone: '0429988776', address: 'Liberty Market, Lahore' },
+    { name: 'Bella Italia', email: 'hello@bellaitalia.com', phone: '0518877665', address: 'Blue Area, Islamabad' },
+    { name: 'Sweet Treats Bakery', email: 'orders@sweettreats.com', phone: '0219988112', address: 'Clifton, Karachi' },
+    { name: 'Green Bowl', email: 'hi@greenbowl.com', phone: '0429911223', address: 'MM Alam Road, Lahore' },
+  ];
   const [alMadina, bellaItalia, sweetTreats, greenBowl] = await Promise.all(
-    [
-      { name: 'Al Madina Grill', email: 'contact@almadinagrill.com', phone: '0429988776', address: 'Liberty Market, Lahore' },
-      { name: 'Bella Italia', email: 'hello@bellaitalia.com', phone: '0518877665', address: 'Blue Area, Islamabad' },
-      { name: 'Sweet Treats Bakery', email: 'orders@sweettreats.com', phone: '0219988112', address: 'Clifton, Karachi' },
-      { name: 'Green Bowl', email: 'hi@greenbowl.com', phone: '0429911223', address: 'MM Alam Road, Lahore' },
-    ].map((data) => prisma.restaurants.create({ data })),
+    restaurantSeeds.map(async (data) => {
+      const user = await prisma.users.create({ data: { email: data.email, password_hash, role: 'restaurant_owner' } });
+      credentials.push({ role: 'restaurant_owner', email: data.email });
+      return prisma.restaurants.create({ data: { ...data, owner_user_id: user.user_id } });
+    }),
   );
 
   console.log('Seeding food categories...');
@@ -115,12 +139,17 @@ async function main() {
   const menuItems = await prisma.menu_items.findMany({ orderBy: { item_id: 'asc' } });
 
   console.log('Seeding delivery agents...');
+  const agentSeeds = [
+    { name: 'Usman Tariq', phone: '03211234567', vehicle_number: 'LEA-2234', email: 'usman.tariq.rider@example.com' },
+    { name: 'Fahad Iqbal', phone: '03217654321', vehicle_number: 'LEB-8871', email: 'fahad.iqbal.rider@example.com' },
+    { name: 'Zainab Hussain', phone: '03219876543', vehicle_number: 'LEC-4432', email: 'zainab.hussain.rider@example.com' },
+  ];
   const [agent1, agent2, agent3] = await Promise.all(
-    [
-      { name: 'Usman Tariq', phone: '03211234567', vehicle_number: 'LEA-2234' },
-      { name: 'Fahad Iqbal', phone: '03217654321', vehicle_number: 'LEB-8871' },
-      { name: 'Zainab Hussain', phone: '03219876543', vehicle_number: 'LEC-4432' },
-    ].map((data) => prisma.delivery_agents.create({ data })),
+    agentSeeds.map(async ({ email, ...data }) => {
+      const user = await prisma.users.create({ data: { email, password_hash, role: 'delivery_agent' } });
+      credentials.push({ role: 'delivery_agent', email });
+      return prisma.delivery_agents.create({ data: { ...data, user_id: user.user_id } });
+    }),
   );
 
   console.log('Seeding orders, order items, payments, and deliveries...');
@@ -178,7 +207,9 @@ async function main() {
     ],
   });
 
-  console.log('Seed complete.');
+  console.log('\nSeed complete. Demo login credentials (all use the same password):\n');
+  console.log(`  Password: ${DEMO_PASSWORD}\n`);
+  console.table(credentials);
 }
 
 main()

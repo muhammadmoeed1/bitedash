@@ -29,6 +29,13 @@ const config: ResourceConfig<paymentsModel, PaymentCreate, PaymentUpdate> = {
   filterableFields: ['order_id', 'payment_status'],
   sortableFields: ['payment_id', 'payment_date', 'amount'],
   defaultSort: { payment_id: 'desc' },
+  protect: {
+    // NOTE: role-gated only, same limitation as order-items (see note there) — real payment
+    // processing arrives with Stripe integration in roadmap Phase 4.
+    create: { roles: ['customer', 'admin'] },
+    update: { roles: ['admin'] },
+    remove: { roles: ['admin'] },
+  },
 };
 
 export const paymentsRouter = createCrudRouter<paymentsModel, PaymentCreate, PaymentUpdate>(config);

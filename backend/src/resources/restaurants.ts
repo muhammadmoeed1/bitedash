@@ -26,6 +26,12 @@ const config: ResourceConfig<restaurantsModel, RestaurantCreate, RestaurantUpdat
   filterableFields: [],
   sortableFields: ['restaurant_id', 'name'],
   defaultSort: { restaurant_id: 'asc' },
+  protect: {
+    // Onboarding a restaurant normally happens via /api/v1/auth/register (role: restaurant_owner).
+    create: { roles: ['admin'] },
+    update: { roles: ['restaurant_owner', 'admin'], ownerField: 'restaurant_id' },
+    remove: { roles: ['admin'] },
+  },
 };
 
 export const restaurantsRouter = createCrudRouter<restaurantsModel, RestaurantCreate, RestaurantUpdate>(config);

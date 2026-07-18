@@ -31,6 +31,13 @@ const config: ResourceConfig<deliveriesModel, DeliveryCreate, DeliveryUpdate> = 
   filterableFields: ['order_id', 'agent_id', 'delivery_status'],
   sortableFields: ['delivery_id'],
   defaultSort: { delivery_id: 'desc' },
+  protect: {
+    // Dispatch (assigning an agent to an order) is admin-controlled.
+    create: { roles: ['admin'] },
+    // A delivery agent may update only their own assigned delivery's status.
+    update: { roles: ['delivery_agent', 'admin'], ownerField: 'agent_id' },
+    remove: { roles: ['admin'] },
+  },
 };
 
 export const deliveriesRouter = createCrudRouter<deliveriesModel, DeliveryCreate, DeliveryUpdate>(config);

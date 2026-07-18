@@ -27,6 +27,14 @@ const config: ResourceConfig<ordersModel, OrderCreate, OrderUpdate> = {
   filterableFields: ['customer_id', 'status'],
   sortableFields: ['order_id', 'order_date', 'total_amount'],
   defaultSort: { order_id: 'desc' },
+  protect: {
+    create: { roles: ['customer', 'admin'], ownerField: 'customer_id' },
+    // NOTE: real status transitions (restaurant accepts, agent delivers) belong to a
+    // dedicated workflow once order placement/fulfillment is built out (see roadmap Phase 3);
+    // for now a customer may only update their own order (e.g. to cancel it).
+    update: { roles: ['customer', 'admin'], ownerField: 'customer_id' },
+    remove: { roles: ['admin'] },
+  },
 };
 
 export const ordersRouter = createCrudRouter<ordersModel, OrderCreate, OrderUpdate>(config);

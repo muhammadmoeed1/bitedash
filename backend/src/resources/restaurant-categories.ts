@@ -24,6 +24,11 @@ const config: ResourceConfig<restaurant_categoriesModel, RestaurantCategoryCreat
   updateSchema,
   filterableFields: ['restaurant_id', 'category_id'],
   sortableFields: [],
+  protect: {
+    create: { roles: ['restaurant_owner', 'admin'], ownerField: 'restaurant_id' },
+    update: { roles: ['restaurant_owner', 'admin'], ownerField: 'restaurant_id' },
+    remove: { roles: ['restaurant_owner', 'admin'], ownerField: 'restaurant_id' },
+  },
 };
 
 export const restaurantCategoriesRouter = createCrudRouter<

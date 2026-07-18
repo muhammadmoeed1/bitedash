@@ -17,6 +17,7 @@ full-stack application.
 - **Backend:** Node.js, Express, TypeScript
 - **Database:** PostgreSQL (hosted on [Neon](https://neon.tech)), accessed via [Prisma](https://prisma.io) with versioned migrations
 - **Validation:** Zod
+- **Auth:** JWT (access + refresh tokens, rotation + revocation), bcrypt password hashing, role-based access control
 - **Frontend:** HTML, CSS, JavaScript *(migrating to React + TypeScript — see roadmap)*
 
 ## Project Structure
@@ -49,6 +50,32 @@ keeping each resource's validation and business rules explicit and typed.
 All list endpoints support pagination (`?page=&pageSize=`), sorting (`?sort=field:asc|desc`),
 and filtering by allow-listed fields (e.g. `?customer_id=3`). Errors are normalized into a
 consistent `{ error: { message, details } }` JSON shape via centralized middleware.
+
+## Authentication & Authorization
+
+Four roles: `customer`, `restaurant_owner`, `delivery_agent`, `admin`. Auth endpoints live
+under `/api/v1/auth`:
+
+| Endpoint | Description |
+|---|---|
+| `POST /api/v1/auth/register` | Create an account as `customer`, `restaurant_owner`, or `delivery_agent` (admin accounts are not self-registerable) |
+| `POST /api/v1/auth/login` | Returns a short-lived access token + a longer-lived refresh token |
+| `POST /api/v1/auth/refresh` | Rotates a refresh token for a new access/refresh pair (old one is revoked) |
+| `POST /api/v1/auth/logout` | Revokes a refresh token |
+| `GET /api/v1/auth/me` | Returns the authenticated user + their linked profile |
+
+Refresh tokens are stored server-side (hashed) so they can be revoked/rotated, rather than
+being purely stateless. Reads (`GET`) on all resources are public, matching a typical
+food-delivery browsing experience; writes are protected per-resource by role, and — for
+resources like menu items, restaurant-category links, restaurant profiles, and deliveries —
+by **ownership** (e.g. a `restaurant_owner` can only edit menu items belonging to *their own*
+restaurant; a `delivery_agent` can only update the status of deliveries assigned to *them*).
+`admin` bypasses ownership checks. This is enforced generically in `backend/src/core/service.ts`
+via a small `protect: { create/update/remove: { roles, ownerField } }` config per resource
+(see `backend/src/resources/*.ts`), rather than repeated per-route auth logic.
+
+After seeding, demo accounts exist for every role (see `npm run seed` output for the full
+list) — all use the password `Password123!`.
 
 ## Getting Started
 

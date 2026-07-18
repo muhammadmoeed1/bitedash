@@ -25,6 +25,12 @@ const config: ResourceConfig<customersModel, CustomerCreate, CustomerUpdate> = {
   filterableFields: ['email'],
   sortableFields: ['customer_id', 'name', 'email'],
   defaultSort: { customer_id: 'asc' },
+  protect: {
+    // Public account creation happens via /api/v1/auth/register; direct creation is admin-only.
+    create: { roles: ['admin'] },
+    update: { roles: ['customer', 'admin'], ownerField: 'customer_id' },
+    remove: { roles: ['admin'] },
+  },
 };
 
 export const customersRouter = createCrudRouter<customersModel, CustomerCreate, CustomerUpdate>(config);

@@ -27,6 +27,11 @@ const config: ResourceConfig<addressesModel, AddressCreate, AddressUpdate> = {
   filterableFields: ['customer_id'],
   sortableFields: ['address_id'],
   defaultSort: { address_id: 'asc' },
+  protect: {
+    create: { roles: ['customer', 'admin'], ownerField: 'customer_id' },
+    update: { roles: ['customer', 'admin'], ownerField: 'customer_id' },
+    remove: { roles: ['customer', 'admin'], ownerField: 'customer_id' },
+  },
 };
 
 export const addressesRouter = createCrudRouter<addressesModel, AddressCreate, AddressUpdate>(config);

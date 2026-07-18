@@ -25,6 +25,12 @@ const config: ResourceConfig<delivery_agentsModel, DeliveryAgentCreate, Delivery
   filterableFields: [],
   sortableFields: ['agent_id', 'name'],
   defaultSort: { agent_id: 'asc' },
+  protect: {
+    // Onboarding an agent normally happens via /api/v1/auth/register (role: delivery_agent).
+    create: { roles: ['admin'] },
+    update: { roles: ['delivery_agent', 'admin'], ownerField: 'agent_id' },
+    remove: { roles: ['admin'] },
+  },
 };
 
 export const deliveryAgentsRouter = createCrudRouter<delivery_agentsModel, DeliveryAgentCreate, DeliveryAgentUpdate>(

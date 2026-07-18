@@ -7,6 +7,7 @@ import { env } from './config/env';
 import { logger } from './lib/logger';
 import { errorHandler, notFoundHandler } from './middleware/error-handler';
 import { apiRouter } from './resources';
+import { authRouter } from './auth/auth.routes';
 
 export function createApp() {
   const app = express();
@@ -33,6 +34,7 @@ export function createApp() {
     res.json({ status: 'ok' });
   });
 
+  app.use('/api/v1/auth', authRouter);
   app.use('/api/v1', apiRouter);
 
   app.use(notFoundHandler);

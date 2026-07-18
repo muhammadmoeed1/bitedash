@@ -23,6 +23,12 @@ const config: ResourceConfig<food_categoriesModel, FoodCategoryCreate, FoodCateg
   filterableFields: [],
   sortableFields: ['category_id', 'category_name'],
   defaultSort: { category_id: 'asc' },
+  protect: {
+    // Global taxonomy shared by all restaurants — admin-managed only.
+    create: { roles: ['admin'] },
+    update: { roles: ['admin'] },
+    remove: { roles: ['admin'] },
+  },
 };
 
 export const foodCategoriesRouter = createCrudRouter<food_categoriesModel, FoodCategoryCreate, FoodCategoryUpdate>(

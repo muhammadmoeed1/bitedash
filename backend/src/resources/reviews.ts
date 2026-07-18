@@ -26,6 +26,11 @@ const config: ResourceConfig<reviewsModel, ReviewCreate, ReviewUpdate> = {
   filterableFields: ['customer_id', 'restaurant_id'],
   sortableFields: ['review_id', 'rating'],
   defaultSort: { review_id: 'desc' },
+  protect: {
+    create: { roles: ['customer', 'admin'], ownerField: 'customer_id' },
+    update: { roles: ['customer', 'admin'], ownerField: 'customer_id' },
+    remove: { roles: ['customer', 'admin'], ownerField: 'customer_id' },
+  },
 };
 
 export const reviewsRouter = createCrudRouter<reviewsModel, ReviewCreate, ReviewUpdate>(config);

@@ -1,7 +1,8 @@
+import { resolveOwnedEntityId } from '../auth/ownership';
 import { CrudRepository } from './repository';
 import { mapPrismaError } from './prisma-error';
-import { NotFoundError } from './http-error';
-import { ResourceConfig } from './types';
+import { HttpError, NotFoundError } from './http-error';
+import { Actor, ResourceConfig, WriteProtection } from './types';
 
 export interface ListQuery {
   page: number;
@@ -57,13 +58,31 @@ export class CrudService<T, TCreate, TUpdate> {
     return Object.keys(where).length ? where : undefined;
   }
 
+  /** Enforces `protection.ownerField` against `record` for non-admin actors. No-op if unset. */
+  private async enforceOwnership(
+    protection: WriteProtection | undefined,
+    actor: Actor | undefined,
+    record: unknown,
+  ): Promise<void> {
+    if (!protection?.ownerField || !actor || actor.role === 'admin') return;
+
+    const ownedId = await resolveOwnedEntityId(actor);
+    if (ownedId === null) throw new HttpError(403, 'No linked profile for this account');
+
+    const recordValue = (record as Record<string, unknown>)[protection.ownerField];
+    if (recordValue !== ownedId) {
+      throw new HttpError(403, 'You do not have permission to modify this resource');
+    }
+  }
+
   async getById(idParams: Record<string, string>): Promise<T> {
     const record = await this.repository.findById(idParams);
     if (!record) throw new NotFoundError(`${this.config.name} not found`);
     return record;
   }
 
-  async create(data: TCreate): Promise<T> {
+  async create(data: TCreate, actor?: Actor): Promise<T> {
+    await this.enforceOwnership(this.config.protect?.create, actor, data);
     try {
       return await this.repository.create(data);
     } catch (err) {
@@ -71,7 +90,11 @@ export class CrudService<T, TCreate, TUpdate> {
     }
   }
 
-  async update(idParams: Record<string, string>, data: TUpdate): Promise<T> {
+  async update(idParams: Record<string, string>, data: TUpdate, actor?: Actor): Promise<T> {
+    if (this.config.protect?.update?.ownerField) {
+      const existing = await this.getById(idParams);
+      await this.enforceOwnership(this.config.protect.update, actor, existing);
+    }
     try {
       return await this.repository.update(idParams, data);
     } catch (err) {
@@ -79,7 +102,11 @@ export class CrudService<T, TCreate, TUpdate> {
     }
   }
 
-  async remove(idParams: Record<string, string>): Promise<T> {
+  async remove(idParams: Record<string, string>, actor?: Actor): Promise<T> {
+    if (this.config.protect?.remove?.ownerField) {
+      const existing = await this.getById(idParams);
+      await this.enforceOwnership(this.config.protect.remove, actor, existing);
+    }
     try {
       return await this.repository.remove(idParams);
     } catch (err) {

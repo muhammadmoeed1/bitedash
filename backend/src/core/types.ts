@@ -1,6 +1,24 @@
 import { z } from 'zod';
+import type { user_role } from '../generated/prisma/enums';
 
 export type PrimaryKey = string | readonly string[];
+
+export interface Actor {
+  userId: number;
+  role: user_role;
+}
+
+export interface WriteProtection {
+  /** Roles allowed to perform this write. Admins are always allowed regardless of this list. */
+  roles: user_role[];
+  /**
+   * Field name that must match the actor's own linked entity id (their customer_id,
+   * restaurant_id, or agent_id, resolved from their user account) for non-admins to proceed.
+   * Checked against the create payload for `create`, and against the existing row for
+   * `update`/`remove`. Omit for role-only protection with no per-row ownership dimension.
+   */
+  ownerField?: string;
+}
 
 /**
  * The subset of a Prisma model delegate's API the generic CRUD engine relies on.
@@ -39,4 +57,10 @@ export interface ResourceConfig<TRecord = unknown, TCreate = unknown, TUpdate = 
   sortableFields?: readonly string[];
   /** Default ordering applied when no ?sort= is given. */
   defaultSort?: Record<string, 'asc' | 'desc'>;
+  /** Per-operation auth requirements for writes. Reads (list/getOne) are always public. */
+  protect?: {
+    create?: WriteProtection;
+    update?: WriteProtection;
+    remove?: WriteProtection;
+  };
 }
