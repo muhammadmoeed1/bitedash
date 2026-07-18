@@ -16,10 +16,10 @@ deployed, well-engineered full-stack application that stands out on GitHub and a
 
 | Area | Today | Target |
 |---|---|---|
-| Backend | Single 591-line `index.js`, Express 5, raw `pg`, 48 CRUD endpoints | Layered TypeScript API (routes → controllers → services → repositories) |
+| Backend | Layered TypeScript API (routes → controllers → services → repositories), generic CRUD engine over 12 resources | ✅ Done — next: harden per business rules as real features land |
 | Auth | None | JWT auth + role-based access (customer / restaurant / rider / admin) |
 | Frontend | 1 static HTML page, vanilla JS, hardcoded `localhost:6006` | React + TypeScript SPA, real ordering flow |
-| Database | 12-table PostgreSQL (Neon), schema only in PDF | Same schema, versioned via migrations + seed data |
+| Database | 12-table PostgreSQL (Neon), schema versioned via Prisma migrations + seed script | ✅ Done |
 | Payments | "Payments" table, no processing | Stripe test-mode checkout + webhooks |
 | Real-time | None | WebSocket order/delivery tracking |
 | Tests | None | Backend + frontend tests, CI-gated |
@@ -50,18 +50,22 @@ deployed, well-engineered full-stack application that stands out on GitHub and a
 
 **Goal:** Turn the single-file API into a maintainable, type-safe, professionally structured backend.
 
-- [ ] Migrate backend to **TypeScript** (`tsconfig`, build scripts)
-- [ ] Adopt a layered architecture: `routes → controllers → services → repositories`
-- [ ] Introduce a data layer with **migrations + type safety** — recommend **Prisma** (or Drizzle) to replace raw SQL, get a versioned schema, and generate types from the DB
-- [ ] Author the 12-table schema as migrations + a **seed script** with realistic sample data
-- [ ] Add **input validation** with **Zod** on all endpoints
-- [ ] Centralized **error-handling middleware** + consistent JSON response shape
-- [ ] Structured **logging** (pino) and environment-based config
-- [ ] Security middleware: `helmet`, configured CORS, rate limiting
-- [ ] Pagination, filtering, and sorting on list endpoints
+- [x] Migrate backend to **TypeScript** (`tsconfig`, build scripts)
+- [x] Adopt a layered architecture: `routes → controllers → services → repositories` (implemented as a generic, reusable CRUD engine in `src/core/`, configured per-resource in `src/resources/`)
+- [x] Introduce a data layer with **migrations + type safety** — **Prisma** with a `PrismaPg` driver adapter, replacing raw `pg` queries; schema introspected from the live DB and baselined as the first migration
+- [x] Author the 12-table schema as migrations + a **seed script** with realistic sample data (`prisma/seed.ts`)
+- [x] Add **input validation** with **Zod** on all endpoints (per-resource create/update schemas)
+- [x] Centralized **error-handling middleware** + consistent JSON response shape (`{ data }` / `{ error: { message, details } }`)
+- [x] Structured **logging** (pino + pino-http) and environment-based config (validated via Zod in `src/config/env.ts`)
+- [x] Security middleware: `helmet`, configured CORS, rate limiting (`express-rate-limit`)
+- [x] Pagination, filtering, and sorting on list endpoints (`?page=&pageSize=&sort=field:asc|desc&<field>=value`)
 
 **Deliverable:** A typed, layered REST API with validation, migrations, and seed data.
 **CV impact:** "Refactored a monolithic script into a layered TypeScript REST API with schema migrations and request validation."
+
+**Notes:**
+- API moved from the old flat routes (`/customers`, `/add-customer`) to versioned RESTful routes under `/api/v1/*` (e.g. `GET/POST /api/v1/customers`, `GET/PATCH/DELETE /api/v1/customers/:customer_id`). The legacy vanilla-JS frontend targets the old routes and will be reconnected when it's rebuilt in Phase 6.
+- The seed script wipes and repopulates all 12 tables — used deliberately in this session with the user's confirmation since the DB is a personal/team dev database, not shared production data.
 
 ---
 

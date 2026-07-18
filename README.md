@@ -14,19 +14,41 @@ full-stack application.
 
 ## Tech Stack
 
-- **Backend:** Node.js, Express
-- **Database:** PostgreSQL (hosted on [Neon](https://neon.tech))
+- **Backend:** Node.js, Express, TypeScript
+- **Database:** PostgreSQL (hosted on [Neon](https://neon.tech)), accessed via [Prisma](https://prisma.io) with versioned migrations
+- **Validation:** Zod
 - **Frontend:** HTML, CSS, JavaScript *(migrating to React + TypeScript — see roadmap)*
 
 ## Project Structure
 
 ```
 .
-├── backend/    # Express REST API
-├── frontend/   # Client application
+├── backend/    # Express + TypeScript REST API (Prisma ORM, layered architecture)
+├── frontend/   # Client application (legacy vanilla JS — pending React rebuild)
 ├── docs/       # Project documentation (including the original coursework report)
 └── PROJECT_ROADMAP.md
 ```
+
+## Backend Architecture
+
+The API follows a layered, generic CRUD architecture shared across all 12 resources
+(customers, restaurants, menu items, orders, payments, deliveries, reviews, etc.):
+
+```
+routes (Express Router)
+  -> controller (parses request, validates with Zod, shapes response)
+    -> service (business logic, pagination/filtering, error mapping)
+      -> repository (Prisma Client data access)
+```
+
+Each resource (`backend/src/resources/*.ts`) declares its own Zod validation schemas and
+a small config object (primary key, filterable/sortable fields); the shared engine in
+`backend/src/core/` handles the rest. This avoids ~12x duplicated CRUD boilerplate while
+keeping each resource's validation and business rules explicit and typed.
+
+All list endpoints support pagination (`?page=&pageSize=`), sorting (`?sort=field:asc|desc`),
+and filtering by allow-listed fields (e.g. `?customer_id=3`). Errors are normalized into a
+consistent `{ error: { message, details } }` JSON shape via centralized middleware.
 
 ## Getting Started
 
@@ -34,16 +56,22 @@ full-stack application.
 
 ```bash
 cd backend
-npm install
-cp .env.example .env   # fill in your own PostgreSQL connection string
-npm start
+npm install                # also generates the Prisma client (postinstall)
+cp .env.example .env       # fill in your own PostgreSQL connection string
+npm run prisma:migrate     # apply database migrations
+npm run seed               # (optional) populate sample data — WARNING: wipes existing rows
+npm run dev                # start the API in watch mode on http://localhost:6006
 ```
+
+Other useful scripts: `npm run build` (compile to `dist/`), `npm start` (run the compiled
+build), `npm run typecheck`, `npm run prisma:studio` (visual DB browser).
 
 ### Frontend
 
 Open `frontend/index.html` in a browser, or serve the `frontend/` directory with any
-static file server. *(This will change once the frontend is migrated to a proper build
-setup — see the roadmap.)*
+static file server. **Note:** the legacy frontend targets the old flat API shape
+(`/customers`, `/add-customer`, etc.) and is not yet wired up to the new `/api/v1/*`
+REST endpoints — this will be resolved when the frontend is rebuilt in React (see roadmap).
 
 ## Documentation
 

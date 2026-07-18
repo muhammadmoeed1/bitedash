@@ -1,0 +1,130 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model addresses {
+  address_id  Int        @id @default(autoincrement())
+  customer_id Int?
+  street      String?    @db.VarChar(255)
+  city        String?    @db.VarChar(100)
+  zip_code    String?    @db.VarChar(20)
+  label       String?    @db.VarChar(50)
+  customers   customers? @relation(fields: [customer_id], references: [customer_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model customers {
+  customer_id Int         @id @default(autoincrement())
+  name        String?     @db.VarChar(100)
+  email       String?     @unique @db.VarChar(100)
+  phone       String?     @db.VarChar(20)
+  addresses   addresses[]
+  orders      orders[]
+  reviews     reviews[]
+}
+
+model deliveries {
+  delivery_id     Int              @id @default(autoincrement())
+  order_id        Int?
+  agent_id        Int?
+  delivery_status String?          @db.VarChar(50)
+  delivery_time   DateTime?        @db.Time(6)
+  delivery_agents delivery_agents? @relation(fields: [agent_id], references: [agent_id], onDelete: NoAction, onUpdate: NoAction)
+  orders          orders?          @relation(fields: [order_id], references: [order_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model delivery_agents {
+  agent_id       Int          @id @default(autoincrement())
+  name           String?      @db.VarChar(100)
+  phone          String?      @db.VarChar(20)
+  vehicle_number String?      @db.VarChar(50)
+  deliveries     deliveries[]
+}
+
+model food_categories {
+  category_id           Int                     @id @default(autoincrement())
+  category_name         String?                 @db.VarChar(100)
+  menu_items            menu_items[]
+  restaurant_categories restaurant_categories[]
+}
+
+model menu_items {
+  item_id         Int              @id @default(autoincrement())
+  restaurant_id   Int?
+  category_id     Int?
+  item_name       String?          @db.VarChar(100)
+  description     String?
+  price           Decimal?         @db.Decimal(10, 2)
+  availability    Boolean?         @default(true)
+  food_categories food_categories? @relation(fields: [category_id], references: [category_id], onDelete: NoAction, onUpdate: NoAction)
+  restaurants     restaurants?     @relation(fields: [restaurant_id], references: [restaurant_id], onDelete: NoAction, onUpdate: NoAction)
+  order_items     order_items[]
+}
+
+model order_items {
+  order_item_id Int         @id @default(autoincrement())
+  order_id      Int?
+  item_id       Int?
+  quantity      Int?
+  price         Decimal?    @db.Decimal(10, 2)
+  menu_items    menu_items? @relation(fields: [item_id], references: [item_id], onDelete: NoAction, onUpdate: NoAction)
+  orders        orders?     @relation(fields: [order_id], references: [order_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model orders {
+  order_id     Int           @id @default(autoincrement())
+  customer_id  Int?
+  order_date   DateTime?     @default(now()) @db.Date
+  status       String?       @db.VarChar(50)
+  total_amount Decimal?      @db.Decimal(10, 2)
+  deliveries   deliveries[]
+  order_items  order_items[]
+  customers    customers?    @relation(fields: [customer_id], references: [customer_id], onDelete: NoAction, onUpdate: NoAction)
+  payments     payments[]
+}
+
+model payments {
+  payment_id     Int       @id @default(autoincrement())
+  order_id       Int?
+  payment_date   DateTime? @default(now()) @db.Date
+  amount         Decimal?  @db.Decimal(10, 2)
+  payment_method String?   @db.VarChar(50)
+  payment_status String?   @db.VarChar(50)
+  orders         orders?   @relation(fields: [order_id], references: [order_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model restaurant_categories {
+  restaurant_id   Int
+  category_id     Int
+  food_categories food_categories @relation(fields: [category_id], references: [category_id], onDelete: NoAction, onUpdate: NoAction)
+  restaurants     restaurants     @relation(fields: [restaurant_id], references: [restaurant_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([restaurant_id, category_id])
+}
+
+model restaurants {
+  restaurant_id         Int                     @id @default(autoincrement())
+  name                  String?                 @db.VarChar(100)
+  email                 String?                 @db.VarChar(100)
+  phone                 String?                 @db.VarChar(20)
+  address               String?
+  menu_items            menu_items[]
+  restaurant_categories restaurant_categories[]
+  reviews               reviews[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model reviews {
+  review_id     Int          @id @default(autoincrement())
+  customer_id   Int?
+  restaurant_id Int?
+  rating        Int?
+  comment       String?
+  review_date   DateTime?    @default(now()) @db.Date
+  customers     customers?   @relation(fields: [customer_id], references: [customer_id], onDelete: NoAction, onUpdate: NoAction)
+  restaurants   restaurants? @relation(fields: [restaurant_id], references: [restaurant_id], onDelete: NoAction, onUpdate: NoAction)
+}
