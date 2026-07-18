@@ -119,13 +119,19 @@ deployed, well-engineered full-stack application that stands out on GitHub and a
 
 **Goal:** A believable, working checkout without handling real money.
 
-- [ ] Integrate **Stripe** in test mode (Checkout or Payment Intents)
-- [ ] Create payment on checkout; link payment records to orders
-- [ ] Handle Stripe **webhooks** to confirm payment and advance order state
-- [ ] Graceful failure/refund handling
+- [x] Integrate **Stripe** in test mode (Payment Intents) — `POST /api/v1/payments/intent`, amount derived server-side, idempotent per order
+- [x] Create payment on checkout; link payment records to orders (payment row created with the intent, carrying `stripe_payment_intent_id`)
+- [x] Handle Stripe **webhooks** to confirm payment (`payment_intent.succeeded` / `.payment_failed`), signature-verified against the raw body
+- [x] Graceful failure/refund handling — admin refund endpoint; and the whole module degrades to a clear 503 when Stripe keys aren't configured instead of crashing
 
 **Deliverable:** Working test-mode payment flow.
 **CV impact:** "Integrated Stripe (test mode) with webhook-driven order confirmation."
+
+**Notes:**
+- Additive migration added `payments.stripe_payment_intent_id` (unique).
+- All business/ownership validation runs *before* Stripe is invoked, so the rules (ownership, already-paid, cancelled-order, amount) are enforceable and testable even without live keys. Verified end-to-end: 404 (no order), 403 (not your order), 409 (already paid), 503 (valid order, Stripe unconfigured), plus refund role-gating (403 for non-admin) and 422 (refunding a non-Stripe payment).
+- Actual card-charge confirmation requires the user's own Stripe test keys + `stripe listen` webhook forwarding — documented in the README; not runnable in this environment.
+- The generic `payments` CRUD create is now admin-only (real payments flow through the Stripe endpoints).
 
 ---
 

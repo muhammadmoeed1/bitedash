@@ -18,6 +18,7 @@ full-stack application.
 - **Database:** PostgreSQL (hosted on [Neon](https://neon.tech)), accessed via [Prisma](https://prisma.io) with versioned migrations
 - **Validation:** Zod
 - **Auth:** JWT (access + refresh tokens, rotation + revocation), bcrypt password hashing, role-based access control
+- **Payments:** Stripe (test mode) — PaymentIntents + webhook-driven confirmation + refunds
 - **Frontend:** HTML, CSS, JavaScript *(migrating to React + TypeScript — see roadmap)*
 
 ## Project Structure
@@ -101,6 +102,30 @@ hook on the reviews resource config (`backend/src/resources/reviews.ts`).
 Restaurants and menu items also support free-text search via `?search=` (matched
 case-insensitively against name/description fields), in addition to the existing
 pagination/sorting/filtering.
+
+## Payments (Stripe, test mode)
+
+Payments use [Stripe](https://stripe.com) in test mode — no real money, no business
+account required (grab free test keys from the Stripe dashboard). The flow is
+webhook-driven so payment status is only ever confirmed by Stripe, never by the client:
+
+| Endpoint | Who | Description |
+|---|---|---|
+| `POST /api/v1/payments/intent` | customer (own order), admin | Creates a Stripe PaymentIntent for an order's total (amount derived server-side from the order, never the client). Idempotent — repeated calls for the same unpaid order reuse the existing intent instead of double-charging. Returns a `clientSecret` the frontend uses to confirm the card payment. |
+| `POST /api/v1/payments/webhook` | Stripe | Receives `payment_intent.succeeded` / `payment_intent.payment_failed` events and updates the corresponding payment record. Signature-verified against the raw request body. |
+| `POST /api/v1/payments/:payment_id/refund` | admin | Issues a Stripe refund for a completed payment and marks it `refunded`. |
+
+**Configuration is optional** — if `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` are not set,
+the server still boots normally and payment endpoints return a clear `503 "Payments are not
+configured"` rather than crashing. All business rules (ownership, "already paid", "order
+cancelled", valid amount) are validated *before* Stripe is called, so those checks work and
+are testable even without live keys. To enable real test-mode payments locally:
+
+```bash
+# 1. Put your test keys in backend/.env (see .env.example)
+# 2. Forward Stripe webhooks to your local server with the Stripe CLI:
+stripe listen --forward-to localhost:6006/api/v1/payments/webhook
+```
 
 ## Getting Started
 

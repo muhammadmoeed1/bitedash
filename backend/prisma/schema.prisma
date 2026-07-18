@@ -123,13 +123,14 @@ model orders {
 }
 
 model payments {
-  payment_id     Int       @id @default(autoincrement())
-  order_id       Int?
-  payment_date   DateTime? @default(now()) @db.Date
-  amount         Decimal?  @db.Decimal(10, 2)
-  payment_method String?   @db.VarChar(50)
-  payment_status String?   @db.VarChar(50)
-  orders         orders?   @relation(fields: [order_id], references: [order_id], onDelete: NoAction, onUpdate: NoAction)
+  payment_id               Int       @id @default(autoincrement())
+  order_id                 Int?
+  payment_date             DateTime? @default(now()) @db.Date
+  amount                   Decimal?  @db.Decimal(10, 2)
+  payment_method           String?   @db.VarChar(50)
+  payment_status           String?   @db.VarChar(50)
+  stripe_payment_intent_id String?   @unique @db.VarChar(255)
+  orders                   orders?   @relation(fields: [order_id], references: [order_id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model restaurant_categories {

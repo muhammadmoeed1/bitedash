@@ -30,9 +30,9 @@ const config: ResourceConfig<paymentsModel, PaymentCreate, PaymentUpdate> = {
   sortableFields: ['payment_id', 'payment_date', 'amount'],
   defaultSort: { payment_id: 'desc' },
   protect: {
-    // NOTE: role-gated only, same limitation as order-items (see note there) — real payment
-    // processing arrives with Stripe integration in roadmap Phase 4.
-    create: { roles: ['customer', 'admin'] },
+    // Real payments go through POST /api/v1/payments/intent (Stripe-backed, see
+    // backend/src/payments/); this generic create is kept admin-only for corrections/testing.
+    create: { roles: ['admin'] },
     update: { roles: ['admin'] },
     remove: { roles: ['admin'] },
   },

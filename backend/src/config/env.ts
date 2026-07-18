@@ -10,6 +10,10 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(16, 'JWT_REFRESH_SECRET must be at least 16 characters'),
   JWT_ACCESS_EXPIRY_MINUTES: z.coerce.number().int().positive().default(15),
   JWT_REFRESH_EXPIRY_DAYS: z.coerce.number().int().positive().default(7),
+  // Optional: payments gracefully report "not configured" (503) rather than crash the
+  // server on startup when these are unset, since Stripe requires the user's own account.
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
