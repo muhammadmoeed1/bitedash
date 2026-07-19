@@ -14,18 +14,18 @@ deployed, well-engineered full-stack application that stands out on GitHub and a
 
 ## Current State (baseline)
 
-| Area | Today | Target |
-|---|---|---|
-| Backend | Layered TypeScript API (routes → controllers → services → repositories), generic CRUD engine over 12 resources | ✅ Done — next: harden per business rules as real features land |
-| Auth | None | JWT auth + role-based access (customer / restaurant / rider / admin) |
-| Frontend | 1 static HTML page, vanilla JS, hardcoded `localhost:6006` | React + TypeScript SPA, real ordering flow |
-| Database | 12-table PostgreSQL (Neon), schema versioned via Prisma migrations + seed script | ✅ Done |
-| Payments | "Payments" table, no processing | Stripe test-mode checkout + webhooks |
-| Real-time | None | WebSocket order/delivery tracking |
-| Tests | None | Backend + frontend tests, CI-gated |
-| DevOps | None | Docker, GitHub Actions CI/CD, live deploy |
-| Docs | 25-page PDF, no README | Rich README, API docs, ER diagram, live demo link |
-| Version control | No git repo | Clean, meaningful commit history |
+| Area            | Today                                                                                                          | Target                                                               |
+| --------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Backend         | Layered TypeScript API (routes → controllers → services → repositories), generic CRUD engine over 12 resources | ✅ Done — next: harden per business rules as real features land      |
+| Auth            | None                                                                                                           | JWT auth + role-based access (customer / restaurant / rider / admin) |
+| Frontend        | 1 static HTML page, vanilla JS, hardcoded `localhost:6006`                                                     | React + TypeScript SPA, real ordering flow                           |
+| Database        | 12-table PostgreSQL (Neon), schema versioned via Prisma migrations + seed script                               | ✅ Done                                                              |
+| Payments        | "Payments" table, no processing                                                                                | Stripe test-mode checkout + webhooks                                 |
+| Real-time       | None                                                                                                           | WebSocket order/delivery tracking                                    |
+| Tests           | None                                                                                                           | Backend + frontend tests, CI-gated                                   |
+| DevOps          | None                                                                                                           | Docker, GitHub Actions CI/CD, live deploy                            |
+| Docs            | 25-page PDF, no README                                                                                         | Rich README, API docs, ER diagram, live demo link                    |
+| Version control | No git repo                                                                                                    | Clean, meaningful commit history                                     |
 
 ---
 
@@ -64,6 +64,7 @@ deployed, well-engineered full-stack application that stands out on GitHub and a
 **CV impact:** "Refactored a monolithic script into a layered TypeScript REST API with schema migrations and request validation."
 
 **Notes:**
+
 - API moved from the old flat routes (`/customers`, `/add-customer`) to versioned RESTful routes under `/api/v1/*` (e.g. `GET/POST /api/v1/customers`, `GET/PATCH/DELETE /api/v1/customers/:customer_id`). The legacy vanilla-JS frontend targets the old routes and will be reconnected when it's rebuilt in Phase 6.
 - The seed script wipes and repopulates all 12 tables — used deliberately in this session with the user's confirmation since the DB is a personal/team dev database, not shared production data.
 
@@ -84,6 +85,7 @@ deployed, well-engineered full-stack application that stands out on GitHub and a
 **CV impact:** "Implemented JWT-based authentication with role-based access control and per-resource ownership enforcement across four user roles."
 
 **Notes:**
+
 - New `users` + `refresh_tokens` tables added via an additive migration (no changes to existing data); `customers`/`restaurants`/`delivery_agents` each gained a nullable FK back to `users` (`user_id` / `owner_user_id`) so an auth identity is separate from — but linked to — its business profile.
 - Admin accounts are intentionally **not** self-registerable via `/api/v1/auth/register` (only `customer`/`restaurant_owner`/`delivery_agent`) — seed script creates one admin account for testing.
 - Two resources (`order-items`, `payments`) currently have role-only protection without a per-row `ownerField`, since verifying they belong to the caller's own order requires a join the generic ownership check doesn't support yet. Revisit once Phase 3 makes order placement a dedicated transactional endpoint.
@@ -108,6 +110,7 @@ deployed, well-engineered full-stack application that stands out on GitHub and a
 **CV impact:** "Designed an order lifecycle state machine driving distinct customer, restaurant, and delivery workflows, with server-side cart validation and automatic cross-entity status sync."
 
 **Notes:**
+
 - The order and delivery state machines (`backend/src/orders/order-status.ts`) are deliberately hand-written rather than folded into the generic CRUD engine — lifecycle transitions carry business rules (which role may request which target state, ownership, legal transitions) that are clearer as explicit code than as configuration.
 - Generic PATCH on `orders`/`deliveries` no longer accepts a `status`/`delivery_status` field — all lifecycle changes must go through the dedicated state-machine endpoints, closing off a bypass that would otherwise skip the transition rules.
 - An order is restricted to items from a single restaurant (enforced at checkout) — this matches how food delivery actually works and keeps the restaurant-orders dashboard query simple.
@@ -128,8 +131,9 @@ deployed, well-engineered full-stack application that stands out on GitHub and a
 **CV impact:** "Integrated Stripe (test mode) with webhook-driven order confirmation."
 
 **Notes:**
+
 - Additive migration added `payments.stripe_payment_intent_id` (unique).
-- All business/ownership validation runs *before* Stripe is invoked, so the rules (ownership, already-paid, cancelled-order, amount) are enforceable and testable even without live keys. Verified end-to-end: 404 (no order), 403 (not your order), 409 (already paid), 503 (valid order, Stripe unconfigured), plus refund role-gating (403 for non-admin) and 422 (refunding a non-Stripe payment).
+- All business/ownership validation runs _before_ Stripe is invoked, so the rules (ownership, already-paid, cancelled-order, amount) are enforceable and testable even without live keys. Verified end-to-end: 404 (no order), 403 (not your order), 409 (already paid), 503 (valid order, Stripe unconfigured), plus refund role-gating (403 for non-admin) and 422 (refunding a non-Stripe payment).
 - Actual card-charge confirmation requires the user's own Stripe test keys + `stripe listen` webhook forwarding — documented in the README; not runnable in this environment.
 - The generic `payments` CRUD create is now admin-only (real payments flow through the Stripe endpoints).
 
@@ -148,6 +152,7 @@ deployed, well-engineered full-stack application that stands out on GitHub and a
 **CV impact:** "Built real-time order tracking with WebSockets (Socket.IO)."
 
 **Notes:**
+
 - Architecture: a thin `backend/src/realtime/events.ts` holds the io reference + typed emit helpers; services import ONLY from there, never from socket.io directly. This keeps business logic decoupled from the transport and means the whole feature is a no-op (not a crash) if the socket server was never started.
 - Authorization: clients must present a valid access token to connect, and can only `subscribe:order` to orders they're party to (customer who placed it / restaurant owner with an item on it / assigned delivery agent / admin) — same ownership logic as the REST layer, in `backend/src/realtime/order-access.ts`.
 - Events: `order:status`, `delivery:status`, `delivery:location`, `payment:status`, all scoped to an `order:<id>` room.
@@ -172,6 +177,7 @@ deployed, well-engineered full-stack application that stands out on GitHub and a
 **CV impact:** "Built a responsive React + TypeScript SPA with server-state caching and role-based routing."
 
 **Notes:**
+
 - The legacy vanilla-JS coursework frontend was archived to `docs/legacy-frontend/`; the new app is a fresh Vite + React + TS project in `frontend/`.
 - Live order tracking (`src/hooks/useOrderRealtime.ts`) consumes the Phase 5 Socket.IO events — a customer watching an order sees status changes and the delivery agent's simulated GPS pings update in real time.
 - Route-level code-splitting keeps Recharts in its own chunk (main bundle ~394 KB, admin/charts chunk ~377 KB loaded only when an admin opens analytics).
@@ -183,15 +189,24 @@ deployed, well-engineered full-stack application that stands out on GitHub and a
 
 **Goal:** Demonstrate engineering discipline — a huge new-grad differentiator.
 
-- [ ] Backend **unit + integration tests** (Vitest/Jest + Supertest) against a test DB
-- [ ] Frontend **component tests** (Vitest + React Testing Library)
-- [ ] At least one **E2E** happy-path test (Playwright) — e.g. register → order → pay
-- [ ] **ESLint + Prettier** across both packages
-- [ ] **Husky + lint-staged** pre-commit hooks
-- [ ] Aim for meaningful coverage on core logic (services, state machine, auth)
+- [x] Backend **unit + integration tests** (Vitest + Supertest) — 49 tests, no live DB required (see notes)
+- [x] Frontend **component tests** (Vitest + React Testing Library) — 17 tests
+- [ ] At least one **E2E** happy-path test (Playwright) — deferred, see notes
+- [x] **ESLint + Prettier** across both packages
+- [x] **Husky + lint-staged** pre-commit hooks
+- [x] Meaningful coverage on core logic: state machines, password/JWT, generic CRUD engine (pagination/filter/search/ownership/hooks), full auth HTTP journey
 
 **Deliverable:** A tested codebase with automated quality gates.
-**CV impact:** "Wrote unit, integration, and E2E tests; enforced quality via linting and pre-commit hooks."
+**CV impact:** "Wrote unit and integration tests with mocked data layers (no live DB needed in CI), enforced quality via ESLint/Prettier and pre-commit hooks."
+
+**Notes:**
+
+- **Test strategy — no live database required.** Neon's pooled connection is slow and unreliable for rapid test iteration (see Phase 1–3 notes), so instead of a real test DB: (1) unit tests use a hand-written in-memory fake Prisma delegate (`core/service.test.ts`) to exercise the generic CRUD engine — pagination, filtering, search, sorting, ownership enforcement, business-rule hooks — with zero DB dependency; (2) the auth integration test (`auth/auth.routes.test.ts`) mocks the whole `lib/prisma` module with an in-memory store and drives real HTTP requests through the actual Express app via Supertest (register → duplicate-rejected → wrong-password-rejected → login → `/me` → refresh-rotation → reuse-rejected → logout → post-logout-refresh-rejected). This is also a deliberate CI advantage (Phase 8): these tests need no `DATABASE_URL` secret and can't flake on network/Neon cold-starts.
+- Backend `typescript` was downgraded from the bleeding-edge 7.x (Go-based) compiler to the latest stable 5.9.3 specifically because `typescript-eslint` cannot yet parse TS7 projects at all (a hard incompatibility, not a lint-rule issue) — a good example of choosing ecosystem compatibility over being on the newest possible tool.
+- `tsconfig.build.json` excludes `*.test.ts` from the production build; the base `tsconfig.json` (used for `typecheck`) still includes them.
+- ESLint config note: `eslint-plugin-react-hooks` v7's "recommended" preset assumes React Compiler adoption (rules like `purity`, `set-state-in-render`, etc.) — this project doesn't use the Compiler yet, so one legitimate false-positive (a simulated-GPS demo button using `Math.random()` in a click handler) is disabled with a scoped, commented `eslint-disable` rather than silencing the rule project-wide.
+- **E2E (Playwright) deferred**: this environment has no confirmed browser/display support to verify a real Playwright run end-to-end, and claiming it works without having actually run it would be dishonest. Worth adding once there's a way to verify it (e.g. in CI on Phase 8, or locally).
+- Husky + lint-staged run from the repo root (`package.json`, `.husky/pre-commit`, `lint-staged.config.cjs`) since git hooks are repo-wide, not per-package — `backend/` and `frontend/` are two independent npm projects, not a workspace, so lint-staged invokes each package's own locally-installed `eslint`/`prettier` binaries directly with explicit repo-root-relative paths (learned that `npm --prefix <dir> exec` does _not_ change the child process's actual working directory, only npm's package-resolution context — a real gotcha worth remembering).
 
 ---
 
@@ -213,7 +228,7 @@ deployed, well-engineered full-stack application that stands out on GitHub and a
 
 ## Phase 9 — Documentation & Presentation (the CV/GitHub multiplier)
 
-**Goal:** Make the repo *sell itself* in the first 15 seconds.
+**Goal:** Make the repo _sell itself_ in the first 15 seconds.
 
 - [ ] **Killer README:** hero screenshot/GIF, live demo + demo credentials, feature list, tech stack badges, architecture diagram, setup steps
 - [ ] **API documentation** via Swagger/OpenAPI (interactive docs endpoint)
@@ -224,7 +239,7 @@ deployed, well-engineered full-stack application that stands out on GitHub and a
 - [ ] Finalize polished **CV bullet points** (draft below)
 
 **Deliverable:** A repo that reads as a professional product.
-**CV impact:** This is where all the prior work becomes *legible* to a recruiter.
+**CV impact:** This is where all the prior work becomes _legible_ to a recruiter.
 
 ---
 
@@ -252,5 +267,5 @@ Phases are numbered in dependency order, but you can ship value incrementally:
 6. **Phases 7–8** — quality + deploy (do 8 early enough to keep a live demo throughout).
 7. **Phase 9** — continuous, but finalize last.
 
-> **Tip:** Deploy something *early* (end of Phase 2 or 3). A live demo that grows over time beats a
+> **Tip:** Deploy something _early_ (end of Phase 2 or 3). A live demo that grows over time beats a
 > perfect app that never ships.

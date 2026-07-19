@@ -55,7 +55,11 @@ export function Checkout() {
           <span className="text-xl font-bold text-brand-700">{formatMoney(totalPrice())}</span>
         </div>
 
-        {error && <div className="mt-4"><ErrorState message={error} /></div>}
+        {error && (
+          <div className="mt-4">
+            <ErrorState message={error} />
+          </div>
+        )}
 
         <Button onClick={placeOrder} loading={loading} className="mt-5 w-full">
           Place order

@@ -56,12 +56,7 @@ export interface FoodCategory {
 }
 
 export type OrderStatus =
-  | 'placed'
-  | 'accepted'
-  | 'preparing'
-  | 'out_for_delivery'
-  | 'delivered'
-  | 'cancelled'
+  'placed' | 'accepted' | 'preparing' | 'out_for_delivery' | 'delivered' | 'cancelled'
 
 export interface Order {
   order_id: number

@@ -35,4 +35,6 @@ const config: ResourceConfig<restaurantsModel, RestaurantCreate, RestaurantUpdat
   },
 };
 
-export const restaurantsRouter = createCrudRouter<restaurantsModel, RestaurantCreate, RestaurantUpdate>(config);
+export const restaurantsRouter = createCrudRouter<restaurantsModel, RestaurantCreate, RestaurantUpdate>(
+  config,
+);

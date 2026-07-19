@@ -69,7 +69,9 @@ async function main() {
   ];
   const [ali, sara, hamza, moeed, ayesha, bilal] = await Promise.all(
     customerSeeds.map(async (data) => {
-      const user = await prisma.users.create({ data: { email: data.email, password_hash, role: 'customer' } });
+      const user = await prisma.users.create({
+        data: { email: data.email, password_hash, role: 'customer' },
+      });
       credentials.push({ role: 'customer', email: data.email });
       return prisma.customers.create({ data: { ...data, user_id: user.user_id } });
     }),
@@ -78,25 +80,78 @@ async function main() {
   console.log('Seeding addresses...');
   await prisma.addresses.createMany({
     data: [
-      { customer_id: ali.customer_id, street: '12 Model Town', city: 'Lahore', zip_code: '54000', label: 'Home' },
-      { customer_id: sara.customer_id, street: '45 DHA Phase 5', city: 'Lahore', zip_code: '54792', label: 'Home' },
-      { customer_id: hamza.customer_id, street: '7 F-10 Markaz', city: 'Islamabad', zip_code: '44000', label: 'Home' },
-      { customer_id: moeed.customer_id, street: '21 Gulshan-e-Iqbal', city: 'Karachi', zip_code: '75300', label: 'Home' },
-      { customer_id: ayesha.customer_id, street: '3 Bahria Town', city: 'Rawalpindi', zip_code: '46000', label: 'Home' },
-      { customer_id: bilal.customer_id, street: '88 Johar Town', city: 'Lahore', zip_code: '54782', label: 'Work' },
+      {
+        customer_id: ali.customer_id,
+        street: '12 Model Town',
+        city: 'Lahore',
+        zip_code: '54000',
+        label: 'Home',
+      },
+      {
+        customer_id: sara.customer_id,
+        street: '45 DHA Phase 5',
+        city: 'Lahore',
+        zip_code: '54792',
+        label: 'Home',
+      },
+      {
+        customer_id: hamza.customer_id,
+        street: '7 F-10 Markaz',
+        city: 'Islamabad',
+        zip_code: '44000',
+        label: 'Home',
+      },
+      {
+        customer_id: moeed.customer_id,
+        street: '21 Gulshan-e-Iqbal',
+        city: 'Karachi',
+        zip_code: '75300',
+        label: 'Home',
+      },
+      {
+        customer_id: ayesha.customer_id,
+        street: '3 Bahria Town',
+        city: 'Rawalpindi',
+        zip_code: '46000',
+        label: 'Home',
+      },
+      {
+        customer_id: bilal.customer_id,
+        street: '88 Johar Town',
+        city: 'Lahore',
+        zip_code: '54782',
+        label: 'Work',
+      },
     ],
   });
 
   console.log('Seeding restaurants...');
   const restaurantSeeds = [
-    { name: 'Al Madina Grill', email: 'contact@almadinagrill.com', phone: '0429988776', address: 'Liberty Market, Lahore' },
-    { name: 'Bella Italia', email: 'hello@bellaitalia.com', phone: '0518877665', address: 'Blue Area, Islamabad' },
-    { name: 'Sweet Treats Bakery', email: 'orders@sweettreats.com', phone: '0219988112', address: 'Clifton, Karachi' },
+    {
+      name: 'Al Madina Grill',
+      email: 'contact@almadinagrill.com',
+      phone: '0429988776',
+      address: 'Liberty Market, Lahore',
+    },
+    {
+      name: 'Bella Italia',
+      email: 'hello@bellaitalia.com',
+      phone: '0518877665',
+      address: 'Blue Area, Islamabad',
+    },
+    {
+      name: 'Sweet Treats Bakery',
+      email: 'orders@sweettreats.com',
+      phone: '0219988112',
+      address: 'Clifton, Karachi',
+    },
     { name: 'Green Bowl', email: 'hi@greenbowl.com', phone: '0429911223', address: 'MM Alam Road, Lahore' },
   ];
   const [alMadina, bellaItalia, sweetTreats, greenBowl] = await Promise.all(
     restaurantSeeds.map(async (data) => {
-      const user = await prisma.users.create({ data: { email: data.email, password_hash, role: 'restaurant_owner' } });
+      const user = await prisma.users.create({
+        data: { email: data.email, password_hash, role: 'restaurant_owner' },
+      });
       credentials.push({ role: 'restaurant_owner', email: data.email });
       return prisma.restaurants.create({ data: { ...data, owner_user_id: user.user_id } });
     }),
@@ -122,27 +177,126 @@ async function main() {
 
   console.log('Seeding menu items...');
   const menuItemsData = [
-    { restaurant_id: alMadina.restaurant_id, category_id: fastFood.category_id, item_name: 'Chicken Seekh Kebab Roll', description: 'Grilled chicken seekh kebab wrapped in naan with mint chutney', price: 450, availability: true },
-    { restaurant_id: alMadina.restaurant_id, category_id: fastFood.category_id, item_name: 'Beef Burger', description: 'Charbroiled beef patty with cheddar, lettuce, and special sauce', price: 650, availability: true },
-    { restaurant_id: alMadina.restaurant_id, category_id: beverages.category_id, item_name: 'Fresh Lime Soda', description: 'Chilled soda with fresh lime and mint', price: 180, availability: true },
-    { restaurant_id: bellaItalia.restaurant_id, category_id: italian.category_id, item_name: 'Margherita Pizza', description: 'Classic tomato, mozzarella, and basil on a thin crust', price: 950, availability: true },
-    { restaurant_id: bellaItalia.restaurant_id, category_id: italian.category_id, item_name: 'Chicken Alfredo Pasta', description: 'Creamy alfredo sauce with grilled chicken and fettuccine', price: 1100, availability: true },
-    { restaurant_id: bellaItalia.restaurant_id, category_id: italian.category_id, item_name: 'Bruschetta', description: 'Toasted baguette topped with tomato, garlic, and basil', price: 500, availability: true },
-    { restaurant_id: sweetTreats.restaurant_id, category_id: desserts.category_id, item_name: 'Chocolate Lava Cake', description: 'Warm chocolate cake with a molten center, served with ice cream', price: 550, availability: true },
-    { restaurant_id: sweetTreats.restaurant_id, category_id: desserts.category_id, item_name: 'New York Cheesecake', description: 'Classic baked cheesecake with a graham cracker crust', price: 600, availability: true },
-    { restaurant_id: sweetTreats.restaurant_id, category_id: desserts.category_id, item_name: 'Red Velvet Cupcake', description: 'Moist red velvet cupcake with cream cheese frosting', price: 300, availability: true },
-    { restaurant_id: greenBowl.restaurant_id, category_id: healthy.category_id, item_name: 'Grilled Chicken Caesar Salad', description: 'Romaine, parmesan, croutons, and grilled chicken breast', price: 700, availability: true },
-    { restaurant_id: greenBowl.restaurant_id, category_id: healthy.category_id, item_name: 'Quinoa Buddha Bowl', description: 'Quinoa, roasted vegetables, chickpeas, and tahini dressing', price: 750, availability: true },
-    { restaurant_id: greenBowl.restaurant_id, category_id: healthy.category_id, item_name: 'Avocado Toast', description: 'Multigrain toast topped with smashed avocado and chili flakes', price: 500, availability: false },
+    {
+      restaurant_id: alMadina.restaurant_id,
+      category_id: fastFood.category_id,
+      item_name: 'Chicken Seekh Kebab Roll',
+      description: 'Grilled chicken seekh kebab wrapped in naan with mint chutney',
+      price: 450,
+      availability: true,
+    },
+    {
+      restaurant_id: alMadina.restaurant_id,
+      category_id: fastFood.category_id,
+      item_name: 'Beef Burger',
+      description: 'Charbroiled beef patty with cheddar, lettuce, and special sauce',
+      price: 650,
+      availability: true,
+    },
+    {
+      restaurant_id: alMadina.restaurant_id,
+      category_id: beverages.category_id,
+      item_name: 'Fresh Lime Soda',
+      description: 'Chilled soda with fresh lime and mint',
+      price: 180,
+      availability: true,
+    },
+    {
+      restaurant_id: bellaItalia.restaurant_id,
+      category_id: italian.category_id,
+      item_name: 'Margherita Pizza',
+      description: 'Classic tomato, mozzarella, and basil on a thin crust',
+      price: 950,
+      availability: true,
+    },
+    {
+      restaurant_id: bellaItalia.restaurant_id,
+      category_id: italian.category_id,
+      item_name: 'Chicken Alfredo Pasta',
+      description: 'Creamy alfredo sauce with grilled chicken and fettuccine',
+      price: 1100,
+      availability: true,
+    },
+    {
+      restaurant_id: bellaItalia.restaurant_id,
+      category_id: italian.category_id,
+      item_name: 'Bruschetta',
+      description: 'Toasted baguette topped with tomato, garlic, and basil',
+      price: 500,
+      availability: true,
+    },
+    {
+      restaurant_id: sweetTreats.restaurant_id,
+      category_id: desserts.category_id,
+      item_name: 'Chocolate Lava Cake',
+      description: 'Warm chocolate cake with a molten center, served with ice cream',
+      price: 550,
+      availability: true,
+    },
+    {
+      restaurant_id: sweetTreats.restaurant_id,
+      category_id: desserts.category_id,
+      item_name: 'New York Cheesecake',
+      description: 'Classic baked cheesecake with a graham cracker crust',
+      price: 600,
+      availability: true,
+    },
+    {
+      restaurant_id: sweetTreats.restaurant_id,
+      category_id: desserts.category_id,
+      item_name: 'Red Velvet Cupcake',
+      description: 'Moist red velvet cupcake with cream cheese frosting',
+      price: 300,
+      availability: true,
+    },
+    {
+      restaurant_id: greenBowl.restaurant_id,
+      category_id: healthy.category_id,
+      item_name: 'Grilled Chicken Caesar Salad',
+      description: 'Romaine, parmesan, croutons, and grilled chicken breast',
+      price: 700,
+      availability: true,
+    },
+    {
+      restaurant_id: greenBowl.restaurant_id,
+      category_id: healthy.category_id,
+      item_name: 'Quinoa Buddha Bowl',
+      description: 'Quinoa, roasted vegetables, chickpeas, and tahini dressing',
+      price: 750,
+      availability: true,
+    },
+    {
+      restaurant_id: greenBowl.restaurant_id,
+      category_id: healthy.category_id,
+      item_name: 'Avocado Toast',
+      description: 'Multigrain toast topped with smashed avocado and chili flakes',
+      price: 500,
+      availability: false,
+    },
   ];
   await prisma.menu_items.createMany({ data: menuItemsData });
   const menuItems = await prisma.menu_items.findMany({ orderBy: { item_id: 'asc' } });
 
   console.log('Seeding delivery agents...');
   const agentSeeds = [
-    { name: 'Usman Tariq', phone: '03211234567', vehicle_number: 'LEA-2234', email: 'usman.tariq.rider@example.com' },
-    { name: 'Fahad Iqbal', phone: '03217654321', vehicle_number: 'LEB-8871', email: 'fahad.iqbal.rider@example.com' },
-    { name: 'Zainab Hussain', phone: '03219876543', vehicle_number: 'LEC-4432', email: 'zainab.hussain.rider@example.com' },
+    {
+      name: 'Usman Tariq',
+      phone: '03211234567',
+      vehicle_number: 'LEA-2234',
+      email: 'usman.tariq.rider@example.com',
+    },
+    {
+      name: 'Fahad Iqbal',
+      phone: '03217654321',
+      vehicle_number: 'LEB-8871',
+      email: 'fahad.iqbal.rider@example.com',
+    },
+    {
+      name: 'Zainab Hussain',
+      phone: '03219876543',
+      vehicle_number: 'LEC-4432',
+      email: 'zainab.hussain.rider@example.com',
+    },
   ];
   const [agent1, agent2, agent3] = await Promise.all(
     agentSeeds.map(async ({ email, ...data }) => {
@@ -154,12 +308,60 @@ async function main() {
 
   console.log('Seeding orders, order items, payments, and deliveries...');
   const orderPlans = [
-    { customer: ali, status: 'delivered', items: [menuItems[0], menuItems[2]], agent: agent1, deliveryStatus: 'delivered', paymentStatus: 'completed', paymentMethod: 'card' },
-    { customer: sara, status: 'delivered', items: [menuItems[3], menuItems[5]], agent: agent2, deliveryStatus: 'delivered', paymentStatus: 'completed', paymentMethod: 'wallet' },
-    { customer: hamza, status: 'out_for_delivery', items: [menuItems[6], menuItems[7]], agent: agent3, deliveryStatus: 'in_transit', paymentStatus: 'completed', paymentMethod: 'cash' },
-    { customer: moeed, status: 'preparing', items: [menuItems[9]], agent: agent1, deliveryStatus: 'assigned', paymentStatus: 'pending', paymentMethod: 'card' },
-    { customer: ayesha, status: 'placed', items: [menuItems[1], menuItems[2]], agent: agent2, deliveryStatus: 'assigned', paymentStatus: 'pending', paymentMethod: 'cash' },
-    { customer: bilal, status: 'cancelled', items: [menuItems[10]], agent: agent3, deliveryStatus: 'failed', paymentStatus: 'refunded', paymentMethod: 'card' },
+    {
+      customer: ali,
+      status: 'delivered',
+      items: [menuItems[0], menuItems[2]],
+      agent: agent1,
+      deliveryStatus: 'delivered',
+      paymentStatus: 'completed',
+      paymentMethod: 'card',
+    },
+    {
+      customer: sara,
+      status: 'delivered',
+      items: [menuItems[3], menuItems[5]],
+      agent: agent2,
+      deliveryStatus: 'delivered',
+      paymentStatus: 'completed',
+      paymentMethod: 'wallet',
+    },
+    {
+      customer: hamza,
+      status: 'out_for_delivery',
+      items: [menuItems[6], menuItems[7]],
+      agent: agent3,
+      deliveryStatus: 'in_transit',
+      paymentStatus: 'completed',
+      paymentMethod: 'cash',
+    },
+    {
+      customer: moeed,
+      status: 'preparing',
+      items: [menuItems[9]],
+      agent: agent1,
+      deliveryStatus: 'assigned',
+      paymentStatus: 'pending',
+      paymentMethod: 'card',
+    },
+    {
+      customer: ayesha,
+      status: 'placed',
+      items: [menuItems[1], menuItems[2]],
+      agent: agent2,
+      deliveryStatus: 'assigned',
+      paymentStatus: 'pending',
+      paymentMethod: 'cash',
+    },
+    {
+      customer: bilal,
+      status: 'cancelled',
+      items: [menuItems[10]],
+      agent: agent3,
+      deliveryStatus: 'failed',
+      paymentStatus: 'refunded',
+      paymentMethod: 'card',
+    },
   ] as const;
 
   for (const plan of orderPlans) {
@@ -199,11 +401,36 @@ async function main() {
   console.log('Seeding reviews...');
   await prisma.reviews.createMany({
     data: [
-      { customer_id: ali.customer_id, restaurant_id: alMadina.restaurant_id, rating: 5, comment: 'Best seekh kebab roll in town, fast delivery too!' },
-      { customer_id: sara.customer_id, restaurant_id: bellaItalia.restaurant_id, rating: 4, comment: 'Great pasta, pizza crust could be crispier.' },
-      { customer_id: hamza.customer_id, restaurant_id: sweetTreats.restaurant_id, rating: 5, comment: 'The lava cake was incredible, will order again.' },
-      { customer_id: moeed.customer_id, restaurant_id: greenBowl.restaurant_id, rating: 4, comment: 'Healthy and filling, good portion size.' },
-      { customer_id: ayesha.customer_id, restaurant_id: alMadina.restaurant_id, rating: 3, comment: 'Good food but the order took longer than expected.' },
+      {
+        customer_id: ali.customer_id,
+        restaurant_id: alMadina.restaurant_id,
+        rating: 5,
+        comment: 'Best seekh kebab roll in town, fast delivery too!',
+      },
+      {
+        customer_id: sara.customer_id,
+        restaurant_id: bellaItalia.restaurant_id,
+        rating: 4,
+        comment: 'Great pasta, pizza crust could be crispier.',
+      },
+      {
+        customer_id: hamza.customer_id,
+        restaurant_id: sweetTreats.restaurant_id,
+        rating: 5,
+        comment: 'The lava cake was incredible, will order again.',
+      },
+      {
+        customer_id: moeed.customer_id,
+        restaurant_id: greenBowl.restaurant_id,
+        rating: 4,
+        comment: 'Healthy and filling, good portion size.',
+      },
+      {
+        customer_id: ayesha.customer_id,
+        restaurant_id: alMadina.restaurant_id,
+        rating: 3,
+        comment: 'Good food but the order took longer than expected.',
+      },
     ],
   });
 

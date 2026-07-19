@@ -1,0 +1,14 @@
+{
+  "name": "bitedash",
+  "private": true,
+  "version": "1.0.0",
+  "description": "BiteDash monorepo root — hosts git hooks (Husky + lint-staged) shared by backend/ and frontend/.",
+  "scripts": {
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.0",
+    "prettier": "^3.9.5"
+  }
+}

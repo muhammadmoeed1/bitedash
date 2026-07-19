@@ -28,7 +28,9 @@ function Timeline({ status }: { status: string }) {
             >
               {i + 1}
             </span>
-            <span className={`text-sm ${done ? 'font-semibold text-neutral-900' : 'text-neutral-400'}`}>
+            <span
+              className={`text-sm ${done ? 'font-semibold text-neutral-900' : 'text-neutral-400'}`}
+            >
               {titleCase(step)}
             </span>
             {i < LIFECYCLE.length - 1 && <span className="text-neutral-300">→</span>}
@@ -56,23 +58,32 @@ export function OrderTracking() {
   const itemsQuery = useQuery({
     queryKey: ['order-items', orderId],
     queryFn: async () =>
-      (await api.get<ListResponse<OrderItem>>('/order-items', { params: { order_id: orderId, pageSize: 100 } })).data
-        .data,
+      (
+        await api.get<ListResponse<OrderItem>>('/order-items', {
+          params: { order_id: orderId, pageSize: 100 },
+        })
+      ).data.data,
   })
   const deliveryQuery = useQuery({
     queryKey: ['order-deliveries', orderId],
     queryFn: async () =>
-      (await api.get<ListResponse<Delivery>>('/deliveries', { params: { order_id: orderId, pageSize: 10 } })).data.data,
+      (
+        await api.get<ListResponse<Delivery>>('/deliveries', {
+          params: { order_id: orderId, pageSize: 10 },
+        })
+      ).data.data,
   })
 
   // When a live event arrives, refetch the authoritative records.
   useEffect(() => {
     if (live.orderStatus) queryClient.invalidateQueries({ queryKey: ['order', orderId] })
-    if (live.deliveryStatus) queryClient.invalidateQueries({ queryKey: ['order-deliveries', orderId] })
+    if (live.deliveryStatus)
+      queryClient.invalidateQueries({ queryKey: ['order-deliveries', orderId] })
   }, [live.orderStatus, live.deliveryStatus, orderId, queryClient])
 
   if (orderQuery.isLoading) return <PageLoader />
-  if (orderQuery.isError) return <ErrorState message={apiErrorMessage(orderQuery.error, 'Could not load order')} />
+  if (orderQuery.isError)
+    return <ErrorState message={apiErrorMessage(orderQuery.error, 'Could not load order')} />
 
   const order = orderQuery.data!
   const status = live.orderStatus ?? order.status ?? 'placed'
@@ -116,7 +127,9 @@ export function OrderTracking() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Order #{order.order_id}</h1>
         <span className="flex items-center gap-2 text-xs text-neutral-500">
-          <span className={`h-2 w-2 rounded-full ${live.connected ? 'bg-green-500' : 'bg-neutral-300'}`} />
+          <span
+            className={`h-2 w-2 rounded-full ${live.connected ? 'bg-green-500' : 'bg-neutral-300'}`}
+          />
           {live.connected ? 'Live' : 'Offline'}
         </span>
       </div>
@@ -138,7 +151,9 @@ export function OrderTracking() {
           {live.location && (
             <p className="mt-2 text-sm text-neutral-600">
               Live location: {live.location.lat.toFixed(4)}, {live.location.lng.toFixed(4)}{' '}
-              <span className="text-neutral-400">({new Date(live.location.at).toLocaleTimeString()})</span>
+              <span className="text-neutral-400">
+                ({new Date(live.location.at).toLocaleTimeString()})
+              </span>
             </p>
           )}
         </Card>
@@ -152,13 +167,17 @@ export function OrderTracking() {
               <span>
                 {it.quantity} × item #{it.item_id}
               </span>
-              <span className="font-medium">{formatMoney(Number(it.price) * Number(it.quantity))}</span>
+              <span className="font-medium">
+                {formatMoney(Number(it.price) * Number(it.quantity))}
+              </span>
             </li>
           ))}
         </ul>
         <div className="mt-3 flex justify-between border-t border-neutral-200 pt-3">
           <span className="font-semibold">Total</span>
-          <span className="text-xl font-bold text-brand-700">{formatMoney(order.total_amount)}</span>
+          <span className="text-xl font-bold text-brand-700">
+            {formatMoney(order.total_amount)}
+          </span>
         </div>
       </Card>
 
@@ -176,7 +195,11 @@ export function OrderTracking() {
             )}
           </div>
           {payMessage && <p className="mt-3 text-sm text-neutral-600">{payMessage}</p>}
-          {actionError && <div className="mt-3"><ErrorState message={actionError} /></div>}
+          {actionError && (
+            <div className="mt-3">
+              <ErrorState message={actionError} />
+            </div>
+          )}
         </Card>
       )}
     </div>

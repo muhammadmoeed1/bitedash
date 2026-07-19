@@ -9,7 +9,11 @@ export function Orders() {
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['orders'],
     queryFn: async () =>
-      (await api.get<ListResponse<Order>>('/orders', { params: { pageSize: 50, sort: 'order_id:desc' } })).data,
+      (
+        await api.get<ListResponse<Order>>('/orders', {
+          params: { pageSize: 50, sort: 'order_id:desc' },
+        })
+      ).data,
   })
 
   return (
@@ -32,7 +36,9 @@ export function Orders() {
                   <p className="text-sm text-neutral-500">{order.order_date?.slice(0, 10)}</p>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="font-bold text-brand-700">{formatMoney(order.total_amount)}</span>
+                  <span className="font-bold text-brand-700">
+                    {formatMoney(order.total_amount)}
+                  </span>
                   <StatusBadge status={order.status} />
                 </div>
               </Card>

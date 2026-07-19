@@ -31,7 +31,12 @@ export function Register() {
         role === 'customer'
           ? { ...base, name, phone: phone || undefined }
           : role === 'restaurant_owner'
-            ? { ...base, restaurant_name: restaurantName, phone: phone || undefined, address: address || undefined }
+            ? {
+                ...base,
+                restaurant_name: restaurantName,
+                phone: phone || undefined,
+                address: address || undefined,
+              }
             : { ...base, name, phone, vehicle_number: vehicleNumber || undefined }
       await register(payload)
       navigate('/', { replace: true })
@@ -72,7 +77,11 @@ export function Register() {
           {role === 'restaurant_owner' ? (
             <>
               <Field label="Restaurant name">
-                <Input value={restaurantName} onChange={(e) => setRestaurantName(e.target.value)} required />
+                <Input
+                  value={restaurantName}
+                  onChange={(e) => setRestaurantName(e.target.value)}
+                  required
+                />
               </Field>
               <Field label="Address">
                 <Input value={address} onChange={(e) => setAddress(e.target.value)} />

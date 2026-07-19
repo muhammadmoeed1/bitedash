@@ -42,7 +42,12 @@ export async function register(input: RegisterInput): Promise<AuthResult> {
       });
     } else {
       await prisma.delivery_agents.create({
-        data: { name: input.name, phone: input.phone, vehicle_number: input.vehicle_number, user_id: user.user_id },
+        data: {
+          name: input.name,
+          phone: input.phone,
+          vehicle_number: input.vehicle_number,
+          user_id: user.user_id,
+        },
       });
     }
   } catch (err) {

@@ -26,14 +26,20 @@ export function Restaurants() {
           <p className="text-sm text-neutral-500">Browse places near you and order in</p>
         </div>
         <div className="w-full sm:w-72">
-          <Input placeholder="Search restaurants..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input
+            placeholder="Search restaurants..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
       </div>
 
       {isLoading && <PageLoader />}
       {isError && <ErrorState message={apiErrorMessage(error, 'Could not load restaurants')} />}
 
-      {data && data.data.length === 0 && <EmptyState title="No restaurants found" hint="Try a different search." />}
+      {data && data.data.length === 0 && (
+        <EmptyState title="No restaurants found" hint="Try a different search." />
+      )}
 
       {data && data.data.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

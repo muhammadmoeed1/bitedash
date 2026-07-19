@@ -28,8 +28,11 @@ export function DeliveryDashboard() {
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['agent-deliveries', agentId],
     queryFn: async () =>
-      (await api.get<ListResponse<Delivery>>('/deliveries', { params: { agent_id: agentId, pageSize: 100 } })).data
-        .data,
+      (
+        await api.get<ListResponse<Delivery>>('/deliveries', {
+          params: { agent_id: agentId, pageSize: 100 },
+        })
+      ).data.data,
     enabled: !!agentId,
     refetchInterval: 15000,
   })
@@ -41,6 +44,10 @@ export function DeliveryDashboard() {
   })
 
   // Simulate a live GPS ping over the socket — the customer watching sees it in real time.
+  // (react-hooks/purity flags Math.random here on the assumption this project uses the React
+  // Compiler, which it doesn't — this handler only ever runs from the onClick below, never
+  // during render, so the randomness is safe.)
+  /* eslint-disable react-hooks/purity */
   const pingLocation = (delivery: Delivery) => {
     const socket = getSocket()
     socket.emit('delivery:location', {
@@ -49,6 +56,7 @@ export function DeliveryDashboard() {
       lng: 74.3 + Math.random() * 0.1,
     })
   }
+  /* eslint-enable react-hooks/purity */
 
   if (profileLoading) return <PageLoader />
   if (!agentId) return <EmptyState title="No delivery-agent profile linked to this account" />
@@ -87,7 +95,9 @@ export function DeliveryDashboard() {
                       <Button
                         key={a.status}
                         variant={a.status === 'failed' ? 'danger' : 'primary'}
-                        onClick={() => setStatus.mutate({ deliveryId: d.delivery_id, status: a.status })}
+                        onClick={() =>
+                          setStatus.mutate({ deliveryId: d.delivery_id, status: a.status })
+                        }
                         loading={setStatus.isPending}
                       >
                         {a.label}

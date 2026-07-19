@@ -1,4 +1,11 @@
-export const ORDER_STATUSES = ['placed', 'accepted', 'preparing', 'out_for_delivery', 'delivered', 'cancelled'] as const;
+export const ORDER_STATUSES = [
+  'placed',
+  'accepted',
+  'preparing',
+  'out_for_delivery',
+  'delivered',
+  'cancelled',
+] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
 /** Legal next states for each order status. Terminal states (delivered/cancelled) have none. */

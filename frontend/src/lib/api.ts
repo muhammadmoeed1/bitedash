@@ -52,7 +52,11 @@ api.interceptors.response.use(
 /** Extracts a human-readable message from an API error response. */
 export function apiErrorMessage(err: unknown, fallback = 'Something went wrong'): string {
   if (axios.isAxiosError(err)) {
-    return (err.response?.data as { error?: { message?: string } })?.error?.message ?? err.message ?? fallback
+    return (
+      (err.response?.data as { error?: { message?: string } })?.error?.message ??
+      err.message ??
+      fallback
+    )
   }
   return fallback
 }

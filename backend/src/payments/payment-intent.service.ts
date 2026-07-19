@@ -14,7 +14,10 @@ export interface PaymentIntentResult {
  * total amount. Idempotent by design — calling this twice for the same unpaid order
  * returns the same client secret rather than creating a duplicate charge.
  */
-export async function createPaymentIntentForOrder(actor: Actor, orderId: number): Promise<PaymentIntentResult> {
+export async function createPaymentIntentForOrder(
+  actor: Actor,
+  orderId: number,
+): Promise<PaymentIntentResult> {
   // Validate business rules and ownership before touching Stripe, so a misconfigured/missing
   // API key doesn't mask an otherwise-invalid request (and so these rules stay testable
   // without live Stripe keys).

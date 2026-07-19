@@ -15,21 +15,22 @@ const updateSchema = z.object({});
 export type RestaurantCategoryCreate = z.infer<typeof createSchema>;
 export type RestaurantCategoryUpdate = z.infer<typeof updateSchema>;
 
-const config: ResourceConfig<restaurant_categoriesModel, RestaurantCategoryCreate, RestaurantCategoryUpdate> = {
-  name: 'restaurant category link',
-  path: 'restaurant-categories',
-  delegate: prisma.restaurant_categories as unknown as PrismaDelegate<restaurant_categoriesModel>,
-  primaryKey: ['restaurant_id', 'category_id'],
-  createSchema,
-  updateSchema,
-  filterableFields: ['restaurant_id', 'category_id'],
-  sortableFields: [],
-  protect: {
-    create: { roles: ['restaurant_owner', 'admin'], ownerField: 'restaurant_id' },
-    update: { roles: ['restaurant_owner', 'admin'], ownerField: 'restaurant_id' },
-    remove: { roles: ['restaurant_owner', 'admin'], ownerField: 'restaurant_id' },
-  },
-};
+const config: ResourceConfig<restaurant_categoriesModel, RestaurantCategoryCreate, RestaurantCategoryUpdate> =
+  {
+    name: 'restaurant category link',
+    path: 'restaurant-categories',
+    delegate: prisma.restaurant_categories as unknown as PrismaDelegate<restaurant_categoriesModel>,
+    primaryKey: ['restaurant_id', 'category_id'],
+    createSchema,
+    updateSchema,
+    filterableFields: ['restaurant_id', 'category_id'],
+    sortableFields: [],
+    protect: {
+      create: { roles: ['restaurant_owner', 'admin'], ownerField: 'restaurant_id' },
+      update: { roles: ['restaurant_owner', 'admin'], ownerField: 'restaurant_id' },
+      remove: { roles: ['restaurant_owner', 'admin'], ownerField: 'restaurant_id' },
+    },
+  };
 
 export const restaurantCategoriesRouter = createCrudRouter<
   restaurant_categoriesModel,

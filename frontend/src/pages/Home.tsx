@@ -22,7 +22,8 @@ export function Home() {
         Delicious food, <span className="text-brand-600">delivered fast</span>
       </h1>
       <p className="mx-auto mt-4 max-w-lg text-lg text-neutral-600">
-        Browse restaurants, order in a couple of taps, and track your delivery live from the kitchen to your door.
+        Browse restaurants, order in a couple of taps, and track your delivery live from the kitchen
+        to your door.
       </p>
       <div className="mt-8 flex justify-center gap-3">
         <Link to="/register">

@@ -26,8 +26,16 @@ export function createCrudRouter<T, TCreate, TUpdate>(config: ResourceConfig<T, 
   router.get(`/${idPath}`, asyncHandler(controller.getOne));
 
   router.post('/', ...protectionMiddleware(config.protect?.create), asyncHandler(controller.create));
-  router.patch(`/${idPath}`, ...protectionMiddleware(config.protect?.update), asyncHandler(controller.update));
-  router.delete(`/${idPath}`, ...protectionMiddleware(config.protect?.remove), asyncHandler(controller.remove));
+  router.patch(
+    `/${idPath}`,
+    ...protectionMiddleware(config.protect?.update),
+    asyncHandler(controller.update),
+  );
+  router.delete(
+    `/${idPath}`,
+    ...protectionMiddleware(config.protect?.remove),
+    asyncHandler(controller.remove),
+  );
 
   return router;
 }

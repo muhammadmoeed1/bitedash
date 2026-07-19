@@ -61,7 +61,13 @@ export const useAuth = create<AuthState>((set) => ({
     }
     try {
       const res = await api.get<{ data: AuthUser }>('/auth/me')
-      set({ user: { user_id: res.data.data.user_id, email: res.data.data.email, role: res.data.data.role } })
+      set({
+        user: {
+          user_id: res.data.data.user_id,
+          email: res.data.data.email,
+          role: res.data.data.role,
+        },
+      })
     } catch {
       tokens.clear()
     } finally {

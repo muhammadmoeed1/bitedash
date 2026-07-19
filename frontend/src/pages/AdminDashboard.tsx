@@ -79,7 +79,9 @@ export function AdminDashboard() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-        <p className="text-sm text-neutral-500">Platform overview (computed live from the database)</p>
+        <p className="text-sm text-neutral-500">
+          Platform overview (computed live from the database)
+        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
@@ -94,8 +96,18 @@ export function AdminDashboard() {
         <Card>
           <h2 className="mb-4 font-semibold">Orders by status</h2>
           <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={data.ordersByStatus} margin={{ top: 8, right: 8, bottom: 8, left: -16 }}>
-              <XAxis dataKey="status" tick={{ fontSize: 12 }} stroke="#a3a3a3" interval={0} angle={-15} dy={8} />
+            <BarChart
+              data={data.ordersByStatus}
+              margin={{ top: 8, right: 8, bottom: 8, left: -16 }}
+            >
+              <XAxis
+                dataKey="status"
+                tick={{ fontSize: 12 }}
+                stroke="#a3a3a3"
+                interval={0}
+                angle={-15}
+                dy={8}
+              />
               <YAxis allowDecimals={false} tick={{ fontSize: 12 }} stroke="#a3a3a3" />
               <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
               <Bar dataKey="count" name="Orders" fill={BAR_COLOR} radius={[4, 4, 0, 0]} />

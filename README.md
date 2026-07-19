@@ -21,6 +21,7 @@ full-stack application.
 - **Payments:** Stripe (test mode) — PaymentIntents + webhook-driven confirmation + refunds
 - **Real-time:** Socket.IO — live order/delivery status + delivery location tracking
 - **Frontend:** React + TypeScript (Vite), Tailwind CSS, React Router, TanStack Query, Zustand, Recharts
+- **Quality:** Vitest (backend + frontend), React Testing Library, ESLint + Prettier, Husky + lint-staged
 
 ## Project Structure
 
@@ -58,20 +59,20 @@ consistent `{ error: { message, details } }` JSON shape via centralized middlewa
 Four roles: `customer`, `restaurant_owner`, `delivery_agent`, `admin`. Auth endpoints live
 under `/api/v1/auth`:
 
-| Endpoint | Description |
-|---|---|
+| Endpoint                     | Description                                                                                                         |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | `POST /api/v1/auth/register` | Create an account as `customer`, `restaurant_owner`, or `delivery_agent` (admin accounts are not self-registerable) |
-| `POST /api/v1/auth/login` | Returns a short-lived access token + a longer-lived refresh token |
-| `POST /api/v1/auth/refresh` | Rotates a refresh token for a new access/refresh pair (old one is revoked) |
-| `POST /api/v1/auth/logout` | Revokes a refresh token |
-| `GET /api/v1/auth/me` | Returns the authenticated user + their linked profile |
+| `POST /api/v1/auth/login`    | Returns a short-lived access token + a longer-lived refresh token                                                   |
+| `POST /api/v1/auth/refresh`  | Rotates a refresh token for a new access/refresh pair (old one is revoked)                                          |
+| `POST /api/v1/auth/logout`   | Revokes a refresh token                                                                                             |
+| `GET /api/v1/auth/me`        | Returns the authenticated user + their linked profile                                                               |
 
 Refresh tokens are stored server-side (hashed) so they can be revoked/rotated, rather than
 being purely stateless. Reads (`GET`) on all resources are public, matching a typical
 food-delivery browsing experience; writes are protected per-resource by role, and — for
 resources like menu items, restaurant-category links, restaurant profiles, and deliveries —
-by **ownership** (e.g. a `restaurant_owner` can only edit menu items belonging to *their own*
-restaurant; a `delivery_agent` can only update the status of deliveries assigned to *them*).
+by **ownership** (e.g. a `restaurant_owner` can only edit menu items belonging to _their own_
+restaurant; a `delivery_agent` can only update the status of deliveries assigned to _them_).
 `admin` bypasses ownership checks. This is enforced generically in `backend/src/core/service.ts`
 via a small `protect: { create/update/remove: { roles, ownerField } }` config per resource
 (see `backend/src/resources/*.ts`), rather than repeated per-route auth logic.
@@ -84,12 +85,12 @@ list) — all use the password `Password123!`.
 Real order placement and lifecycle management live outside the generic CRUD engine, since
 they involve business rules a per-resource config can't express cleanly:
 
-| Endpoint | Who | Description |
-|---|---|---|
-| `POST /api/v1/orders/checkout` | customer | Places an order from a cart (`{ items: [{ item_id, quantity }] }`). Prices, availability, and single-restaurant-per-order are all re-validated server-side — client-sent prices/totals are never trusted. |
-| `PATCH /api/v1/orders/:order_id/status` | customer, restaurant_owner, admin | Transitions an order through its lifecycle (`placed → accepted → preparing → out_for_delivery → delivered`, or `→ cancelled`). Each role may only request specific target statuses on orders they own; illegal transitions (e.g. skipping straight to `delivered`) are rejected. |
-| `PATCH /api/v1/deliveries/:delivery_id/status` | delivery_agent, admin | Transitions a delivery (`assigned → picked_up → in_transit → delivered`, or `→ failed`) through its own state machine. Reaching `delivered` automatically syncs the parent order's status too. |
-| `GET /api/v1/restaurants/:restaurant_id/orders` | restaurant_owner (own restaurant), admin | Dashboard view of every order containing that restaurant's items, with customer/items/payment/delivery details joined in. |
+| Endpoint                                        | Who                                      | Description                                                                                                                                                                                                                                                                      |
+| ----------------------------------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /api/v1/orders/checkout`                  | customer                                 | Places an order from a cart (`{ items: [{ item_id, quantity }] }`). Prices, availability, and single-restaurant-per-order are all re-validated server-side — client-sent prices/totals are never trusted.                                                                        |
+| `PATCH /api/v1/orders/:order_id/status`         | customer, restaurant_owner, admin        | Transitions an order through its lifecycle (`placed → accepted → preparing → out_for_delivery → delivered`, or `→ cancelled`). Each role may only request specific target statuses on orders they own; illegal transitions (e.g. skipping straight to `delivered`) are rejected. |
+| `PATCH /api/v1/deliveries/:delivery_id/status`  | delivery_agent, admin                    | Transitions a delivery (`assigned → picked_up → in_transit → delivered`, or `→ failed`) through its own state machine. Reaching `delivered` automatically syncs the parent order's status too.                                                                                   |
+| `GET /api/v1/restaurants/:restaurant_id/orders` | restaurant_owner (own restaurant), admin | Dashboard view of every order containing that restaurant's items, with customer/items/payment/delivery details joined in.                                                                                                                                                        |
 
 The state machines and role/ownership rules live in `backend/src/orders/order-status.ts`
 and the small services alongside it — kept as explicit, readable code rather than forced
@@ -110,16 +111,16 @@ Payments use [Stripe](https://stripe.com) in test mode — no real money, no bus
 account required (grab free test keys from the Stripe dashboard). The flow is
 webhook-driven so payment status is only ever confirmed by Stripe, never by the client:
 
-| Endpoint | Who | Description |
-|---|---|---|
-| `POST /api/v1/payments/intent` | customer (own order), admin | Creates a Stripe PaymentIntent for an order's total (amount derived server-side from the order, never the client). Idempotent — repeated calls for the same unpaid order reuse the existing intent instead of double-charging. Returns a `clientSecret` the frontend uses to confirm the card payment. |
-| `POST /api/v1/payments/webhook` | Stripe | Receives `payment_intent.succeeded` / `payment_intent.payment_failed` events and updates the corresponding payment record. Signature-verified against the raw request body. |
-| `POST /api/v1/payments/:payment_id/refund` | admin | Issues a Stripe refund for a completed payment and marks it `refunded`. |
+| Endpoint                                   | Who                         | Description                                                                                                                                                                                                                                                                                            |
+| ------------------------------------------ | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `POST /api/v1/payments/intent`             | customer (own order), admin | Creates a Stripe PaymentIntent for an order's total (amount derived server-side from the order, never the client). Idempotent — repeated calls for the same unpaid order reuse the existing intent instead of double-charging. Returns a `clientSecret` the frontend uses to confirm the card payment. |
+| `POST /api/v1/payments/webhook`            | Stripe                      | Receives `payment_intent.succeeded` / `payment_intent.payment_failed` events and updates the corresponding payment record. Signature-verified against the raw request body.                                                                                                                            |
+| `POST /api/v1/payments/:payment_id/refund` | admin                       | Issues a Stripe refund for a completed payment and marks it `refunded`.                                                                                                                                                                                                                                |
 
 **Configuration is optional** — if `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` are not set,
 the server still boots normally and payment endpoints return a clear `503 "Payments are not
 configured"` rather than crashing. All business rules (ownership, "already paid", "order
-cancelled", valid amount) are validated *before* Stripe is called, so those checks work and
+cancelled", valid amount) are validated _before_ Stripe is called, so those checks work and
 are testable even without live keys. To enable real test-mode payments locally:
 
 ```bash
@@ -142,10 +143,18 @@ const socket = io('http://localhost:6006', { auth: { token: accessToken } });
 // Subscribe to an order you're a party to (customer / restaurant owner / assigned agent / admin)
 socket.emit('subscribe:order', orderId, (res) => console.log(res)); // { ok: true } or { ok: false, error }
 
-socket.on('order:status', (e) => {/* { order_id, status } */});
-socket.on('delivery:status', (e) => {/* { delivery_id, order_id, status } */});
-socket.on('delivery:location', (e) => {/* { delivery_id, order_id, lat, lng, at } */});
-socket.on('payment:status', (e) => {/* { order_id, payment_status } */});
+socket.on('order:status', (e) => {
+  /* { order_id, status } */
+});
+socket.on('delivery:status', (e) => {
+  /* { delivery_id, order_id, status } */
+});
+socket.on('delivery:location', (e) => {
+  /* { delivery_id, order_id, lat, lng, at } */
+});
+socket.on('payment:status', (e) => {
+  /* { order_id, payment_status } */
+});
 
 // Delivery agents stream their live GPS for a delivery; the server re-broadcasts it to the
 // order's room (only the assigned agent — or an admin — is allowed to push):
@@ -207,6 +216,34 @@ password `Password123!`) — the login screen has one-tap buttons for each role.
   on a 401, then replays the request (`src/lib/api.ts`)
 - **socket.io-client** for live order tracking (`src/hooks/useOrderRealtime.ts`)
 - Route-level **code splitting** keeps the charting library out of the main bundle
+
+## Testing & Code Quality
+
+```bash
+cd backend  && npm test    # 49 tests — unit + HTTP integration, no live DB needed
+cd frontend && npm test    # 17 tests — component + store tests (Vitest + RTL)
+```
+
+Neither test suite touches the real Neon database — the pooled connection is too slow and
+unreliable for fast test iteration, and tests shouldn't depend on network access or wipe live
+data anyway. Instead:
+
+- **Backend unit tests** cover the order/delivery state machines, password hashing, JWT
+  sign/verify, and the generic CRUD engine (pagination, filtering, search, sorting, ownership
+  enforcement, business-rule hooks) — the last one via a hand-written in-memory fake Prisma
+  delegate, so the whole engine is exercised with zero DB dependency.
+- **Backend integration tests** mock the Prisma client module entirely and drive real HTTP
+  requests through the actual Express app (Supertest): a full auth journey — register,
+  duplicate-rejected, wrong-password-rejected, login, `/me`, refresh rotation, old-token-reuse
+  rejected, logout, post-logout-refresh-rejected.
+- **Frontend tests** cover the cart store's business rules (single-restaurant-per-order,
+  quantity/total math), shared UI primitives, and `ProtectedRoute`'s role/auth redirect logic.
+
+Both packages run **ESLint (flat config) + Prettier**, and a root-level **Husky + lint-staged**
+pre-commit hook lints and formats only the staged files in whichever package they belong to
+before every commit.
+
+A Playwright E2E suite is a natural next addition (the roadmap notes why it's deferred for now).
 
 ## Documentation
 

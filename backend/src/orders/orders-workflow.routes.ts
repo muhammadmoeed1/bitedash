@@ -6,5 +6,10 @@ import { orderStatusController } from './order-status.controller';
 
 export const ordersWorkflowRouter = Router();
 
-ordersWorkflowRouter.post('/checkout', requireAuth, requireRole('customer'), asyncHandler(checkoutController));
+ordersWorkflowRouter.post(
+  '/checkout',
+  requireAuth,
+  requireRole('customer'),
+  asyncHandler(checkoutController),
+);
 ordersWorkflowRouter.patch('/:order_id/status', requireAuth, asyncHandler(orderStatusController));

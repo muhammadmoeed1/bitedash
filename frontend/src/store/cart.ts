@@ -42,7 +42,11 @@ export const useCart = create<CartState>()(
         }
         const existing = state.lines.find((l) => l.item_id === item.item_id)
         if (existing) {
-          set({ lines: state.lines.map((l) => (l.item_id === item.item_id ? { ...l, quantity: l.quantity + 1 } : l)) })
+          set({
+            lines: state.lines.map((l) =>
+              l.item_id === item.item_id ? { ...l, quantity: l.quantity + 1 } : l,
+            ),
+          })
         } else {
           set({
             restaurantId: item.restaurant_id,

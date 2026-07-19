@@ -11,7 +11,10 @@ import { requireStripe } from './stripe-client';
 async function applyPaymentStatus(intentId: string, status: 'completed' | 'failed'): Promise<void> {
   const payment = await prisma.payments.findUnique({ where: { stripe_payment_intent_id: intentId } });
   if (!payment) return;
-  await prisma.payments.update({ where: { payment_id: payment.payment_id }, data: { payment_status: status } });
+  await prisma.payments.update({
+    where: { payment_id: payment.payment_id },
+    data: { payment_status: status },
+  });
   emitPaymentStatus({ order_id: payment.order_id, payment_status: status });
 }
 

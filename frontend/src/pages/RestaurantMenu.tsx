@@ -17,25 +17,35 @@ export function RestaurantMenu() {
 
   const restaurantQuery = useQuery({
     queryKey: ['restaurant', restaurantId],
-    queryFn: async () => (await api.get<ItemResponse<Restaurant>>(`/restaurants/${restaurantId}`)).data.data,
+    queryFn: async () =>
+      (await api.get<ItemResponse<Restaurant>>(`/restaurants/${restaurantId}`)).data.data,
   })
 
   const menuQuery = useQuery({
     queryKey: ['menu-items', restaurantId],
     queryFn: async () =>
-      (await api.get<ListResponse<MenuItem>>('/menu-items', { params: { restaurant_id: restaurantId, pageSize: 100 } }))
-        .data.data,
+      (
+        await api.get<ListResponse<MenuItem>>('/menu-items', {
+          params: { restaurant_id: restaurantId, pageSize: 100 },
+        })
+      ).data.data,
   })
 
   const handleAdd = (item: MenuItem) => {
     const result = add(item)
-    setToast(result.ok ? { text: `Added ${item.item_name}`, ok: true } : { text: result.error!, ok: false })
+    setToast(
+      result.ok
+        ? { text: `Added ${item.item_name}`, ok: true }
+        : { text: result.error!, ok: false },
+    )
     setTimeout(() => setToast(null), 2500)
   }
 
   if (restaurantQuery.isLoading || menuQuery.isLoading) return <PageLoader />
   if (restaurantQuery.isError)
-    return <ErrorState message={apiErrorMessage(restaurantQuery.error, 'Could not load restaurant')} />
+    return (
+      <ErrorState message={apiErrorMessage(restaurantQuery.error, 'Could not load restaurant')} />
+    )
 
   const restaurant = restaurantQuery.data
   const items = menuQuery.data ?? []
@@ -65,7 +75,9 @@ export function RestaurantMenu() {
             <Card key={item.item_id} className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <h3 className="font-semibold text-neutral-900">{item.item_name}</h3>
-                {item.description && <p className="mt-1 text-sm text-neutral-500">{item.description}</p>}
+                {item.description && (
+                  <p className="mt-1 text-sm text-neutral-500">{item.description}</p>
+                )}
                 <p className="mt-2 font-bold text-brand-700">{formatMoney(item.price)}</p>
                 {item.availability === false && (
                   <p className="mt-1 text-xs font-semibold text-red-600">Currently unavailable</p>

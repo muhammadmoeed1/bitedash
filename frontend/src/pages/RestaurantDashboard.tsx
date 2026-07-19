@@ -3,7 +3,16 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, apiErrorMessage } from '../lib/api'
 import { formatMoney, titleCase } from '../lib/format'
 import { useProfile } from '../hooks/useProfile'
-import { Button, Card, EmptyState, ErrorState, Field, Input, PageLoader, StatusBadge } from '../components/ui'
+import {
+  Button,
+  Card,
+  EmptyState,
+  ErrorState,
+  Field,
+  Input,
+  PageLoader,
+  StatusBadge,
+} from '../components/ui'
 import type { ListResponse, MenuItem, OrderWithDetails } from '../types'
 
 // Which next statuses a restaurant owner can move an order to, given its current status.
@@ -21,14 +30,16 @@ function OrdersPanel({ restaurantId }: { restaurantId: number }) {
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['restaurant-orders', restaurantId],
     queryFn: async () =>
-      (await api.get<{ data: OrderWithDetails[] }>(`/restaurants/${restaurantId}/orders`)).data.data,
+      (await api.get<{ data: OrderWithDetails[] }>(`/restaurants/${restaurantId}/orders`)).data
+        .data,
     refetchInterval: 15000,
   })
 
   const mutation = useMutation({
     mutationFn: ({ orderId, status }: { orderId: number; status: string }) =>
       api.patch(`/orders/${orderId}/status`, { status }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['restaurant-orders', restaurantId] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['restaurant-orders', restaurantId] }),
   })
 
   if (isLoading) return <PageLoader />
@@ -45,11 +56,13 @@ function OrdersPanel({ restaurantId }: { restaurantId: number }) {
               <div>
                 <p className="font-semibold">
                   Order #{order.order_id}{' '}
-                  <span className="font-normal text-neutral-500">— {order.customers?.name ?? 'Customer'}</span>
+                  <span className="font-normal text-neutral-500">
+                    — {order.customers?.name ?? 'Customer'}
+                  </span>
                 </p>
                 <p className="text-sm text-neutral-500">
-                  {(order.order_items ?? []).reduce((n, i) => n + Number(i.quantity ?? 0), 0)} items ·{' '}
-                  {formatMoney(order.total_amount)}
+                  {(order.order_items ?? []).reduce((n, i) => n + Number(i.quantity ?? 0), 0)} items
+                  · {formatMoney(order.total_amount)}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -82,15 +95,22 @@ function MenuPanel({ restaurantId }: { restaurantId: number }) {
   const { data, isLoading } = useQuery({
     queryKey: ['owner-menu', restaurantId],
     queryFn: async () =>
-      (await api.get<ListResponse<MenuItem>>('/menu-items', { params: { restaurant_id: restaurantId, pageSize: 100 } }))
-        .data.data,
+      (
+        await api.get<ListResponse<MenuItem>>('/menu-items', {
+          params: { restaurant_id: restaurantId, pageSize: 100 },
+        })
+      ).data.data,
   })
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['owner-menu', restaurantId] })
 
   const addItem = useMutation({
     mutationFn: () =>
-      api.post('/menu-items', { restaurant_id: restaurantId, item_name: name, price: Number(price) }),
+      api.post('/menu-items', {
+        restaurant_id: restaurantId,
+        item_name: name,
+        price: Number(price),
+      }),
     onSuccess: () => {
       setName('')
       setPrice('')
@@ -129,14 +149,24 @@ function MenuPanel({ restaurantId }: { restaurantId: number }) {
           </div>
           <div className="w-32">
             <Field label="Price">
-              <Input type="number" min="1" value={price} onChange={(e) => setPrice(e.target.value)} required />
+              <Input
+                type="number"
+                min="1"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                required
+              />
             </Field>
           </div>
           <Button type="submit" loading={addItem.isPending}>
             Add
           </Button>
         </form>
-        {formError && <div className="mt-3"><ErrorState message={formError} /></div>}
+        {formError && (
+          <div className="mt-3">
+            <ErrorState message={formError} />
+          </div>
+        )}
       </Card>
 
       {isLoading ? (
@@ -201,7 +231,11 @@ export function RestaurantDashboard() {
         ))}
       </div>
 
-      {tab === 'orders' ? <OrdersPanel restaurantId={restaurantId} /> : <MenuPanel restaurantId={restaurantId} />}
+      {tab === 'orders' ? (
+        <OrdersPanel restaurantId={restaurantId} />
+      ) : (
+        <MenuPanel restaurantId={restaurantId} />
+      )}
     </div>
   )
 }

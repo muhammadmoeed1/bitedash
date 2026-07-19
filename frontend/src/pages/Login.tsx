@@ -36,7 +36,7 @@ export function Login() {
     }
   }
 
-  const useDemo = (demoEmail: string) => {
+  const fillDemoAccount = (demoEmail: string) => {
     setEmail(demoEmail)
     setPassword('Password123!')
   }
@@ -48,10 +48,21 @@ export function Login() {
         <form onSubmit={submit} className="space-y-4">
           {error && <ErrorState message={error} />}
           <Field label="Email">
-            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus />
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoFocus
+            />
           </Field>
           <Field label="Password">
-            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
           </Field>
           <Button type="submit" loading={loading} className="w-full">
             Log in
@@ -67,7 +78,7 @@ export function Login() {
               <button
                 key={acc.email}
                 type="button"
-                onClick={() => useDemo(acc.email)}
+                onClick={() => fillDemoAccount(acc.email)}
                 className="rounded-lg border border-neutral-200 px-3 py-2 text-xs font-medium text-neutral-700 hover:border-brand-400 hover:text-brand-700"
               >
                 {acc.label}

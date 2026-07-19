@@ -33,6 +33,8 @@ const config: ResourceConfig<delivery_agentsModel, DeliveryAgentCreate, Delivery
   },
 };
 
-export const deliveryAgentsRouter = createCrudRouter<delivery_agentsModel, DeliveryAgentCreate, DeliveryAgentUpdate>(
-  config,
-);
+export const deliveryAgentsRouter = createCrudRouter<
+  delivery_agentsModel,
+  DeliveryAgentCreate,
+  DeliveryAgentUpdate
+>(config);

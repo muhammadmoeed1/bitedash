@@ -31,6 +31,8 @@ const config: ResourceConfig<food_categoriesModel, FoodCategoryCreate, FoodCateg
   },
 };
 
-export const foodCategoriesRouter = createCrudRouter<food_categoriesModel, FoodCategoryCreate, FoodCategoryUpdate>(
-  config,
-);
+export const foodCategoriesRouter = createCrudRouter<
+  food_categoriesModel,
+  FoodCategoryCreate,
+  FoodCategoryUpdate
+>(config);

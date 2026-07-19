@@ -3,7 +3,13 @@ import { HttpError, NotFoundError } from '../core/http-error';
 import { resolveOwnedEntityId } from '../auth/ownership';
 import { Actor } from '../core/types';
 import { emitDeliveryStatus, emitOrderStatus } from '../realtime/events';
-import { canTransitionDelivery, canTransitionOrder, DeliveryStatus, orderStatusForDelivery, OrderStatus } from './order-status';
+import {
+  canTransitionDelivery,
+  canTransitionOrder,
+  DeliveryStatus,
+  orderStatusForDelivery,
+  OrderStatus,
+} from './order-status';
 
 export async function updateDeliveryStatus(actor: Actor, deliveryId: number, nextStatus: DeliveryStatus) {
   const delivery = await prisma.deliveries.findUnique({ where: { delivery_id: deliveryId } });

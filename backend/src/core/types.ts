@@ -27,17 +27,11 @@ export interface WriteProtection {
  * each resource is defined (see src/resources/*.ts).
  */
 export interface PrismaDelegate<T = unknown> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   findMany(args?: any): Promise<T[]>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   count(args?: any): Promise<number>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   findUnique(args: any): Promise<T | null>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   create(args: any): Promise<T>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   update(args: any): Promise<T>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   delete(args: any): Promise<T>;
 }
 

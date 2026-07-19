@@ -7,4 +7,9 @@ import { refundController } from './refund.controller';
 export const paymentsWorkflowRouter = Router();
 
 paymentsWorkflowRouter.post('/intent', requireAuth, asyncHandler(createPaymentIntentController));
-paymentsWorkflowRouter.post('/:payment_id/refund', requireAuth, requireRole('admin'), asyncHandler(refundController));
+paymentsWorkflowRouter.post(
+  '/:payment_id/refund',
+  requireAuth,
+  requireRole('admin'),
+  asyncHandler(refundController),
+);

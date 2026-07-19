@@ -1,4 +1,9 @@
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from 'react'
+import type {
+  ButtonHTMLAttributes,
+  InputHTMLAttributes,
+  ReactNode,
+  SelectHTMLAttributes,
+} from 'react'
 import { titleCase } from '../lib/format'
 
 function cn(...parts: (string | false | null | undefined)[]): string {
@@ -10,7 +15,14 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   loading?: boolean
 }
 
-export function Button({ variant = 'primary', loading, className, children, disabled, ...rest }: ButtonProps) {
+export function Button({
+  variant = 'primary',
+  loading,
+  className,
+  children,
+  disabled,
+  ...rest
+}: ButtonProps) {
   const base =
     'inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-brand-400'
   const variants = {
@@ -20,7 +32,11 @@ export function Button({ variant = 'primary', loading, className, children, disa
     ghost: 'text-neutral-700 hover:bg-neutral-100',
   }
   return (
-    <button className={cn(base, variants[variant], className)} disabled={disabled || loading} {...rest}>
+    <button
+      className={cn(base, variants[variant], className)}
+      disabled={disabled || loading}
+      {...rest}
+    >
       {loading && <Spinner size={16} />}
       {children}
     </button>
@@ -64,11 +80,16 @@ export function Field({ label, children }: { label: string; children: ReactNode 
 
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
   return (
-    <div className={cn('rounded-xl border border-neutral-200 bg-white p-5 shadow-sm', className)}>{children}</div>
+    <div className={cn('rounded-xl border border-neutral-200 bg-white p-5 shadow-sm', className)}>
+      {children}
+    </div>
   )
 }
 
 export function Spinner({ size = 20 }: { size?: number }) {
+  // Purely decorative — hidden from the accessibility tree so it never contributes to (or
+  // overrides) an enclosing button/status element's accessible name. Standalone loading
+  // states should provide their own label (see PageLoader).
   return (
     <svg
       className="animate-spin text-current"
@@ -76,17 +97,21 @@ export function Spinner({ size = 20 }: { size?: number }) {
       height={size}
       viewBox="0 0 24 24"
       fill="none"
-      aria-label="Loading"
+      aria-hidden="true"
     >
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"
+      />
     </svg>
   )
 }
 
 export function PageLoader() {
   return (
-    <div className="flex justify-center py-20 text-brand-600">
+    <div className="flex justify-center py-20 text-brand-600" role="status" aria-label="Loading">
       <Spinner size={36} />
     </div>
   )
@@ -103,7 +128,9 @@ export function EmptyState({ title, hint }: { title: string; hint?: string }) {
 
 export function ErrorState({ message }: { message: string }) {
   return (
-    <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{message}</div>
+    <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+      {message}
+    </div>
   )
 }
 
