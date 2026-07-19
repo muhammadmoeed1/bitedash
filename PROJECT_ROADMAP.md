@@ -159,17 +159,23 @@ deployed, well-engineered full-stack application that stands out on GitHub and a
 
 **Goal:** A modern, responsive UI worthy of a portfolio screenshot/GIF.
 
-- [ ] Scaffold **Vite + React + TypeScript**
-- [ ] **React Router** for pages; protected routes by role
-- [ ] **TanStack Query** for server state; lightweight client state (Zustand) as needed
-- [ ] Styling with **Tailwind CSS** (or a component library) — responsive, mobile-friendly
-- [ ] Build screens: auth, restaurant list, menu, cart/checkout, order tracking, restaurant dashboard, admin
-- [ ] Wire **Chart.js/Recharts to real data** (replace the current hardcoded mock analytics)
-- [ ] Environment-based API URL (no hardcoded localhost)
-- [ ] Loading, empty, and error states; form validation with feedback
+- [x] Scaffold **Vite + React + TypeScript**
+- [x] **React Router** for pages; protected routes by role (`ProtectedRoute` with a `roles` allow-list)
+- [x] **TanStack Query** for server state; **Zustand** for auth session + a persisted cart
+- [x] Styling with **Tailwind CSS v4** — responsive, mobile-friendly, shared UI primitives
+- [x] Build screens: auth (login/register), restaurant list + search, menu, cart, checkout, live order tracking, restaurant dashboard, delivery dashboard, admin
+- [x] Wire **Recharts to real data** (orders-by-status + payments-by-status, computed live from the API — no mock data); palette validated with the dataviz colorblind-safe checker
+- [x] Environment-based API URL (`VITE_API_URL`; dev uses a Vite proxy so no hardcoded localhost in code)
+- [x] Loading, empty, and error states; form validation with feedback; axios auth interceptor with transparent token refresh
 
 **Deliverable:** A polished React SPA consuming the real API.
 **CV impact:** "Built a responsive React + TypeScript SPA with server-state caching and role-based routing."
+
+**Notes:**
+- The legacy vanilla-JS coursework frontend was archived to `docs/legacy-frontend/`; the new app is a fresh Vite + React + TS project in `frontend/`.
+- Live order tracking (`src/hooks/useOrderRealtime.ts`) consumes the Phase 5 Socket.IO events — a customer watching an order sees status changes and the delivery agent's simulated GPS pings update in real time.
+- Route-level code-splitting keeps Recharts in its own chunk (main bundle ~394 KB, admin/charts chunk ~377 KB loaded only when an admin opens analytics).
+- Verified: production build passes (`tsc -b && vite build`), the dev server serves the app, and API calls proxy through to the backend returning live data. Visual pixel-level review wasn't possible in this environment — worth a manual once-over in a browser and capturing screenshots/GIFs for the README (Phase 9).
 
 ---
 

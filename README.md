@@ -20,15 +20,15 @@ full-stack application.
 - **Auth:** JWT (access + refresh tokens, rotation + revocation), bcrypt password hashing, role-based access control
 - **Payments:** Stripe (test mode) — PaymentIntents + webhook-driven confirmation + refunds
 - **Real-time:** Socket.IO — live order/delivery status + delivery location tracking
-- **Frontend:** HTML, CSS, JavaScript *(migrating to React + TypeScript — see roadmap)*
+- **Frontend:** React + TypeScript (Vite), Tailwind CSS, React Router, TanStack Query, Zustand, Recharts
 
 ## Project Structure
 
 ```
 .
 ├── backend/    # Express + TypeScript REST API (Prisma ORM, layered architecture)
-├── frontend/   # Client application (legacy vanilla JS — pending React rebuild)
-├── docs/       # Project documentation (including the original coursework report)
+├── frontend/   # React + TypeScript SPA (Vite, Tailwind, TanStack Query, Zustand)
+├── docs/       # Project documentation + archived original coursework frontend & report
 └── PROJECT_ROADMAP.md
 ```
 
@@ -177,10 +177,36 @@ build), `npm run typecheck`, `npm run prisma:studio` (visual DB browser).
 
 ### Frontend
 
-Open `frontend/index.html` in a browser, or serve the `frontend/` directory with any
-static file server. **Note:** the legacy frontend targets the old flat API shape
-(`/customers`, `/add-customer`, etc.) and is not yet wired up to the new `/api/v1/*`
-REST endpoints — this will be resolved when the frontend is rebuilt in React (see roadmap).
+```bash
+cd frontend
+npm install
+npm run dev     # starts Vite on http://localhost:5173
+```
+
+In development the frontend proxies `/api` and `/socket.io` to the backend on port 6006
+(see `vite.config.ts`), so just run the backend alongside it and open http://localhost:5173.
+For production builds, set `VITE_API_URL` (see `frontend/.env.example`) to the deployed API
+origin, then `npm run build` (outputs to `frontend/dist`).
+
+The UI covers every role from one app: a customer browse → cart → checkout → **live order
+tracking** flow, a restaurant-owner dashboard (accept/advance orders, manage menu), a
+delivery-agent view (advance deliveries, stream live GPS), and an admin analytics dashboard
+(Recharts, computed live from the API). Log in with any seeded demo account (all use
+password `Password123!`) — the login screen has one-tap buttons for each role.
+
+> The original vanilla-JS coursework frontend is archived under
+> [`docs/legacy-frontend/`](docs/legacy-frontend/) for reference.
+
+## Frontend Architecture
+
+- **React + TypeScript + Vite** SPA, styled with **Tailwind CSS v4**
+- **React Router** with role-aware protected routes (`src/components/ProtectedRoute.tsx`)
+- **TanStack Query** for all server state (caching, refetch, invalidation); **Zustand** for
+  auth session and a persisted cart
+- **axios** client with an interceptor that attaches the JWT and transparently refreshes it
+  on a 401, then replays the request (`src/lib/api.ts`)
+- **socket.io-client** for live order tracking (`src/hooks/useOrderRealtime.ts`)
+- Route-level **code splitting** keeps the charting library out of the main bundle
 
 ## Documentation
 
