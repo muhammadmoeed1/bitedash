@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bitedash
+      POSTGRES_PASSWORD: bitedash
+      POSTGRES_DB: bitedash
+    ports:
+      - '5432:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U bitedash']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://bitedash:bitedash@db:5432/bitedash?sslmode=disable
+      PORT: 6006
+      NODE_ENV: production
+      CORS_ORIGIN: '*'
+      # Local-only placeholders — never reuse these for a real deployment.
+      JWT_ACCESS_SECRET: local-dev-access-secret-change-me
+      JWT_REFRESH_SECRET: local-dev-refresh-secret-change-me
+      JWT_ACCESS_EXPIRY_MINUTES: '15'
+      JWT_REFRESH_EXPIRY_DAYS: '7'
+    ports:
+      - '6006:6006'
+
+volumes:
+  db-data:
