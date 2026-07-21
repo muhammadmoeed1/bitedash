@@ -1,5 +1,7 @@
 # BiteDash — Online Food Delivery System
 
+[![CI](https://github.com/muhammadmoeed1/bitedash/actions/workflows/ci.yml/badge.svg)](https://github.com/muhammadmoeed1/bitedash/actions/workflows/ci.yml)
+
 > 🚧 **Under active development.** This project started as a university DBMS coursework
 > assignment and is being rebuilt into a full-stack, production-style application.
 > See [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md) for the full plan and progress.
@@ -184,6 +186,22 @@ npm run dev                # start the API in watch mode on http://localhost:600
 Other useful scripts: `npm run build` (compile to `dist/`), `npm start` (run the compiled
 build), `npm run typecheck`, `npm run prisma:studio` (visual DB browser).
 
+### Backend via Docker (no Neon account needed)
+
+```bash
+docker compose up --build     # Postgres + backend, from a clean slate
+```
+
+This runs the backend against a local Postgres container instead of Neon — good for trying
+the project without setting up any cloud accounts. The container applies migrations
+automatically on boot (`prisma migrate deploy`, see `backend/Dockerfile`). To also load the
+demo dataset, run the seed script from the host against the container's exposed Postgres port:
+
+```bash
+cd backend
+DATABASE_URL="postgresql://bitedash:bitedash@localhost:5432/bitedash?sslmode=disable" npm run seed
+```
+
 ### Frontend
 
 ```bash
@@ -244,6 +262,31 @@ pre-commit hook lints and formats only the staged files in whichever package the
 before every commit.
 
 A Playwright E2E suite is a natural next addition (the roadmap notes why it's deferred for now).
+
+## CI/CD & Deployment
+
+**Continuous integration** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs on every
+push/PR to `master`: lint, typecheck, test, and build — for both packages, independently. No
+live database or secrets are required (see [Testing & Code Quality](#testing--code-quality)
+above for why), so CI needs zero configuration beyond the workflow file itself.
+
+**Deployment** targets a split setup — backend on [Render](https://render.com) (Docker), frontend
+on [Vercel](https://vercel.com), database on [Neon](https://neon.tech) (already in use):
+
+1. **Backend → Render.** [`render.yaml`](render.yaml) is a Render Blueprint. On render.com:
+   "New +" → "Blueprint" → connect this repo. Render builds `backend/Dockerfile` and prompts you
+   for the secrets marked `sync: false` (your Neon `DATABASE_URL`, JWT secrets, Stripe keys,
+   `CORS_ORIGIN` set to your deployed frontend's URL). The container runs `prisma migrate deploy`
+   on every boot before starting the server, so schema changes roll out automatically.
+2. **Frontend → Vercel.** Import the repo on vercel.com, set the project's root directory to
+   `frontend`, and set `VITE_API_URL` to your deployed backend's URL. [`vercel.json`](frontend/vercel.json)
+   adds the SPA rewrite so client-side routes (e.g. `/orders/5`) don't 404 on direct load.
+3. **Stripe webhook** (if payments are enabled): point Stripe's webhook endpoint at
+   `<backend-url>/api/v1/payments/webhook` and set `STRIPE_WEBHOOK_SECRET` to the signing secret
+   Stripe gives you for that endpoint.
+
+Both platforms auto-redeploy on every push to `master` once connected — no custom CD workflow
+needed, that's handled by their GitHub integration directly.
 
 ## Documentation
 

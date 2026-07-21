@@ -214,15 +214,21 @@ deployed, well-engineered full-stack application that stands out on GitHub and a
 
 **Goal:** A clickable live demo — the thing recruiters actually open.
 
-- [ ] **Dockerize** backend (and a `docker-compose` for local dev with Postgres)
-- [ ] **GitHub Actions CI:** lint → typecheck → test → build on every PR
-- [ ] **CD:** auto-deploy on merge to main
-- [ ] Deploy backend (Render / Railway / Fly.io), frontend (Vercel / Netlify), DB stays on Neon
-- [ ] Manage secrets via platform env vars; run migrations on deploy
-- [ ] Seed a demo dataset + provide demo login credentials in the README
+- [x] **Dockerize** backend (multi-stage `backend/Dockerfile`) and a `docker-compose.yml` for local dev with Postgres
+- [x] **GitHub Actions CI:** lint → typecheck → test → build on every push/PR — verified green on a real run (both backend and frontend jobs)
+- [x] **CD:** auto-deploy on merge to main — handled by Render's/Vercel's own GitHub integration once connected, no custom Actions workflow needed
+- [ ] Deploy backend (Render), frontend (Vercel), DB stays on Neon — **config is ready (`render.yaml`, `frontend/vercel.json`), but actually connecting the accounts is a step only the project owner can do** (see notes)
+- [x] Manage secrets via platform env vars; run migrations on deploy (`prisma migrate deploy` runs automatically in the container's start command)
+- [x] Seed a demo dataset + provide demo login credentials in the README (done back in Phase 1/2 — `npm run seed`, password `Password123!` for every role)
 
 **Deliverable:** A live URL + green CI badge.
 **CV impact:** "Containerized the app and set up CI/CD with GitHub Actions; deployed a live demo."
+
+**Notes:**
+
+- **CI is genuinely verified**, not just written: pushed and watched run [29850521166](https://github.com/muhammadmoeed1/bitedash/actions/runs/29850521166) go green for both jobs. It needs zero secrets because of the Phase 7 testing design (mocked Prisma, no live DB).
+- **Local Docker build was NOT verified in this session** — Docker Desktop's backend engine was returning API-version-mismatch 500 errors throughout, unrelated to this project's config. Worth running `docker compose up --build` yourself to confirm before relying on it.
+- **Actual deployment (a live URL) requires the project owner's own accounts** on Render and Vercel — this assistant can't sign up for hosting accounts on someone else's behalf (same category of limitation as Stripe test keys in Phase 4). Everything needed to deploy in a few clicks is committed: `render.yaml` (Blueprint), `frontend/vercel.json` (SPA rewrite), and step-by-step instructions in the README's "CI/CD & Deployment" section.
 
 ---
 
