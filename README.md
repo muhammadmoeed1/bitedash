@@ -14,6 +14,41 @@ and orders; delivery agents fulfill deliveries. The original coursework version 
 on a normalized relational database design; this rebuild turns it into a real, deployed
 full-stack application.
 
+## Screenshots
+
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/03-restaurants.png" alt="Restaurant listing"></td>
+<td width="50%"><img src="docs/screenshots/04-menu.png" alt="Restaurant menu"></td>
+</tr>
+<tr>
+<td align="center"><sub>Browse restaurants (public, no login required)</sub></td>
+<td align="center"><sub>Menu with live availability</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/screenshots/06-checkout.png" alt="Checkout"></td>
+<td width="50%"><img src="docs/screenshots/07-order-tracking.png" alt="Live order tracking"></td>
+</tr>
+<tr>
+<td align="center"><sub>Checkout — server-validated cart</sub></td>
+<td align="center"><sub>Live order tracking (Socket.IO)</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/screenshots/08-restaurant-dashboard.png" alt="Restaurant owner dashboard"></td>
+<td width="50%"><img src="docs/screenshots/09-delivery-dashboard.png" alt="Delivery agent dashboard"></td>
+</tr>
+<tr>
+<td align="center"><sub>Restaurant-owner dashboard</sub></td>
+<td align="center"><sub>Delivery-agent dashboard</sub></td>
+</tr>
+<tr>
+<td colspan="2"><img src="docs/screenshots/10-admin-dashboard.png" alt="Admin analytics dashboard"></td>
+</tr>
+<tr>
+<td align="center" colspan="2"><sub>Admin analytics dashboard (Recharts, computed live from the database)</sub></td>
+</tr>
+</table>
+
 ## Tech Stack
 
 - **Backend:** Node.js, Express, TypeScript
@@ -23,7 +58,8 @@ full-stack application.
 - **Payments:** Stripe (test mode) — PaymentIntents + webhook-driven confirmation + refunds
 - **Real-time:** Socket.IO — live order/delivery status + delivery location tracking
 - **Frontend:** React + TypeScript (Vite), Tailwind CSS, React Router, TanStack Query, Zustand, Recharts
-- **Quality:** Vitest (backend + frontend), React Testing Library, ESLint + Prettier, Husky + lint-staged
+- **Quality:** Vitest (backend + frontend), React Testing Library, Playwright (E2E), ESLint + Prettier, Husky + lint-staged
+- **API Docs:** OpenAPI 3.0 + Swagger UI, generated from the same Zod schemas that validate requests
 
 ## Project Structure
 
@@ -55,6 +91,12 @@ keeping each resource's validation and business rules explicit and typed.
 All list endpoints support pagination (`?page=&pageSize=`), sorting (`?sort=field:asc|desc`),
 and filtering by allow-listed fields (e.g. `?customer_id=3`). Errors are normalized into a
 consistent `{ error: { message, details } }` JSON shape via centralized middleware.
+
+**Interactive API docs** are served straight off the same resource configs — run the backend
+and open `http://localhost:6006/api-docs` for a Swagger UI covering all 36 endpoints (the raw
+OpenAPI document is at `/api-docs.json`). `backend/src/docs/openapi.ts` builds it from each
+resource's Zod schemas (via `z.toJSONSchema`) plus its `protect`/`filterableFields` config,
+so the docs can't drift out of sync with the actual validation and auth rules.
 
 ## Authentication & Authorization
 
@@ -261,7 +303,18 @@ Both packages run **ESLint (flat config) + Prettier**, and a root-level **Husky 
 pre-commit hook lints and formats only the staged files in whichever package they belong to
 before every commit.
 
-A Playwright E2E suite is a natural next addition (the roadmap notes why it's deferred for now).
+**End-to-end tests** (`frontend/e2e/happy-path.spec.ts`, Playwright) drive a real browser
+through the full customer journey — login, browse, add to cart, checkout, place an order, and
+verify the live tracking page — against the real backend and database:
+
+```bash
+cd backend  && npm run seed   # demo accounts must exist
+cd frontend && npm run test:e2e
+```
+
+Unlike the Vitest suites, this one _does_ need a live, seeded database, so it's deliberately
+**not** part of CI — consistent with CI having zero live-DB dependency (see above). It's a
+local/pre-deploy sanity check, run against `npm run dev` on both packages.
 
 ## CI/CD & Deployment
 
@@ -288,9 +341,44 @@ on [Vercel](https://vercel.com), database on [Neon](https://neon.tech) (already 
 Both platforms auto-redeploy on every push to `master` once connected — no custom CD workflow
 needed, that's handled by their GitHub integration directly.
 
+## What I Built & Learned
+
+This started as a university DBMS coursework project — a 12-table PostgreSQL schema behind a
+single vanilla-JS page. Rebuilding it into BiteDash meant turning "a database with a UI" into
+an actual application with the concerns real systems have to deal with:
+
+- **A generic engine, not 12 copy-pasted CRUD controllers.** Once I'd written the third nearly
+  identical resource (routes → controller → service → repository), it was clear the _shape_
+  was reusable and only the _config_ (schema, primary key, filterable fields, ownership rule)
+  differed. The trade-off I kept coming back to: push genuinely generic plumbing (pagination,
+  filtering, ownership checks) into the shared engine, but keep business logic that has real
+  rules — order/delivery state machines, checkout validation, review eligibility — as explicit,
+  hand-written code. Forcing a state machine into a generic config would have made it _shorter_
+  but harder to read, which is the wrong trade for logic that matters.
+- **Client-sent data is a suggestion, not a fact.** Prices, totals, and order status transitions
+  are all re-derived or re-validated server-side, never trusted from the request body — the
+  kind of thing that's easy to skip in a coursework project and isn't optional in a real one.
+- **Tests need a strategy, not just a runner.** Neon's pooled serverless Postgres connection is
+  too slow and unreliable for fast local iteration (confirmed the hard way — see the CI section
+  below), so the whole test suite (unit + integration) runs against in-memory fakes and a fully
+  mocked Prisma client instead of a live database. That was a deliberate constraint that paid
+  off twice: tests run fast locally, and CI needs zero secrets or database access at all.
+- **Debugging across an async boundary means questioning your own tooling first.** While
+  capturing the screenshots in this README, one came out showing the login page where the
+  checkout page should have been. The instinctive assumption — "the app has an auth bug" — was
+  wrong twice over: it was really Neon's serverless cold-start latency racing against a
+  Playwright script that didn't wait for real navigation before asserting success. The fix
+  wasn't in the app at all; it was replacing fixed timeouts with waits for the actual state
+  change. It's the same lesson as the test-database decision above, from the other direction.
+- **Docs that can't drift.** The OpenAPI documentation is generated from the same Zod schemas
+  and resource configs that validate real requests, rather than hand-written and maintained
+  separately — so the documented API and the enforced API are structurally the same thing.
+
 ## Documentation
 
 - [Project Roadmap](PROJECT_ROADMAP.md) — phased plan for turning this into a portfolio-grade project
+- [Architecture Overview](docs/ARCHITECTURE.md) — system diagram, request-flow sequence diagram, layering, and why each major tech choice was made
+- [ER Diagram](docs/ER_DIAGRAM.md) — the full 14-table schema (12 business tables + 2 auth tables) and the reasoning behind a few of its design decisions
 - [Original Coursework Report](docs/Online_Food_Delivery_Project_Report.pdf) — the initial academic project report and database design
 
 ## License

@@ -16,7 +16,7 @@ const updateSchema = createSchema.partial();
 export type RestaurantCreate = z.infer<typeof createSchema>;
 export type RestaurantUpdate = z.infer<typeof updateSchema>;
 
-const config: ResourceConfig<restaurantsModel, RestaurantCreate, RestaurantUpdate> = {
+export const config: ResourceConfig<restaurantsModel, RestaurantCreate, RestaurantUpdate> = {
   name: 'restaurant',
   path: 'restaurants',
   delegate: prisma.restaurants as unknown as PrismaDelegate<restaurantsModel>,

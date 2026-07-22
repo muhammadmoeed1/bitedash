@@ -18,7 +18,7 @@ const updateSchema = createSchema.partial();
 export type MenuItemCreate = z.infer<typeof createSchema>;
 export type MenuItemUpdate = z.infer<typeof updateSchema>;
 
-const config: ResourceConfig<menu_itemsModel, MenuItemCreate, MenuItemUpdate> = {
+export const config: ResourceConfig<menu_itemsModel, MenuItemCreate, MenuItemUpdate> = {
   name: 'menu item',
   path: 'menu-items',
   delegate: prisma.menu_items as unknown as PrismaDelegate<menu_itemsModel>,

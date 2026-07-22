@@ -6,6 +6,9 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
+    // e2e/ holds Playwright specs (a different test runner, own config) — excluded so Vitest
+    // doesn't try to execute them under jsdom.
+    exclude: ['node_modules/**', 'e2e/**'],
     globals: false,
     // This dev environment's process-spawn/IO throughput is inconsistent (seen elsewhere in
     // the project as slow npm installs and slow DB round-trips). The default 'forks' pool

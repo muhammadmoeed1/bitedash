@@ -18,7 +18,7 @@ const updateSchema = createSchema.omit({ status: true }).partial();
 export type OrderCreate = z.infer<typeof createSchema>;
 export type OrderUpdate = z.infer<typeof updateSchema>;
 
-const config: ResourceConfig<ordersModel, OrderCreate, OrderUpdate> = {
+export const config: ResourceConfig<ordersModel, OrderCreate, OrderUpdate> = {
   name: 'order',
   path: 'orders',
   delegate: prisma.orders as unknown as PrismaDelegate<ordersModel>,

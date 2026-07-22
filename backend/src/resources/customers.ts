@@ -15,7 +15,7 @@ const updateSchema = createSchema.partial();
 export type CustomerCreate = z.infer<typeof createSchema>;
 export type CustomerUpdate = z.infer<typeof updateSchema>;
 
-const config: ResourceConfig<customersModel, CustomerCreate, CustomerUpdate> = {
+export const config: ResourceConfig<customersModel, CustomerCreate, CustomerUpdate> = {
   name: 'customer',
   path: 'customers',
   delegate: prisma.customers as unknown as PrismaDelegate<customersModel>,

@@ -19,7 +19,7 @@ const updateSchema = createSchema.partial();
 export type PaymentCreate = z.infer<typeof createSchema>;
 export type PaymentUpdate = z.infer<typeof updateSchema>;
 
-const config: ResourceConfig<paymentsModel, PaymentCreate, PaymentUpdate> = {
+export const config: ResourceConfig<paymentsModel, PaymentCreate, PaymentUpdate> = {
   name: 'payment',
   path: 'payments',
   delegate: prisma.payments as unknown as PrismaDelegate<paymentsModel>,

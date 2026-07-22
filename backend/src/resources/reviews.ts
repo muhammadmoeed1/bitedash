@@ -17,7 +17,7 @@ const updateSchema = createSchema.partial();
 export type ReviewCreate = z.infer<typeof createSchema>;
 export type ReviewUpdate = z.infer<typeof updateSchema>;
 
-const config: ResourceConfig<reviewsModel, ReviewCreate, ReviewUpdate> = {
+export const config: ResourceConfig<reviewsModel, ReviewCreate, ReviewUpdate> = {
   name: 'review',
   path: 'reviews',
   delegate: prisma.reviews as unknown as PrismaDelegate<reviewsModel>,

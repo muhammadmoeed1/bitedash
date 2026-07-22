@@ -17,7 +17,7 @@ const updateSchema = createSchema.partial();
 export type AddressCreate = z.infer<typeof createSchema>;
 export type AddressUpdate = z.infer<typeof updateSchema>;
 
-const config: ResourceConfig<addressesModel, AddressCreate, AddressUpdate> = {
+export const config: ResourceConfig<addressesModel, AddressCreate, AddressUpdate> = {
   name: 'address',
   path: 'addresses',
   delegate: prisma.addresses as unknown as PrismaDelegate<addressesModel>,

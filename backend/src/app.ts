@@ -3,6 +3,7 @@ import express from 'express';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import pinoHttp from 'pino-http';
+import swaggerUi from 'swagger-ui-express';
 import { env } from './config/env';
 import { logger } from './lib/logger';
 import { errorHandler, notFoundHandler } from './middleware/error-handler';
@@ -14,6 +15,7 @@ import { deliveriesWorkflowRouter } from './orders/deliveries-workflow.routes';
 import { restaurantsWorkflowRouter } from './orders/restaurants-workflow.routes';
 import { paymentsWorkflowRouter } from './payments/payments-workflow.routes';
 import { stripeWebhookController } from './payments/webhook.controller';
+import { buildOpenApiDocument } from './docs/openapi';
 
 export function createApp() {
   const app = express();
@@ -49,6 +51,10 @@ export function createApp() {
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok' });
   });
+
+  const openApiDocument = buildOpenApiDocument();
+  app.get('/api-docs.json', (_req, res) => res.json(openApiDocument));
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiDocument));
 
   app.use('/api/v1/auth', authRouter);
   // Workflow routes (checkout, status transitions, dashboards, payments) are mounted at the

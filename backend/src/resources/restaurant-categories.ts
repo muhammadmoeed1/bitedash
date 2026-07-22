@@ -15,7 +15,7 @@ const updateSchema = z.object({});
 export type RestaurantCategoryCreate = z.infer<typeof createSchema>;
 export type RestaurantCategoryUpdate = z.infer<typeof updateSchema>;
 
-const config: ResourceConfig<restaurant_categoriesModel, RestaurantCategoryCreate, RestaurantCategoryUpdate> =
+export const config: ResourceConfig<restaurant_categoriesModel, RestaurantCategoryCreate, RestaurantCategoryUpdate> =
   {
     name: 'restaurant category link',
     path: 'restaurant-categories',

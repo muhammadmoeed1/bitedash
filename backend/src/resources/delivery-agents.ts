@@ -15,7 +15,7 @@ const updateSchema = createSchema.partial();
 export type DeliveryAgentCreate = z.infer<typeof createSchema>;
 export type DeliveryAgentUpdate = z.infer<typeof updateSchema>;
 
-const config: ResourceConfig<delivery_agentsModel, DeliveryAgentCreate, DeliveryAgentUpdate> = {
+export const config: ResourceConfig<delivery_agentsModel, DeliveryAgentCreate, DeliveryAgentUpdate> = {
   name: 'delivery agent',
   path: 'delivery-agents',
   delegate: prisma.delivery_agents as unknown as PrismaDelegate<delivery_agentsModel>,

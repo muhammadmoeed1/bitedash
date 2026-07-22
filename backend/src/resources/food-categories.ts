@@ -13,7 +13,7 @@ const updateSchema = createSchema.partial();
 export type FoodCategoryCreate = z.infer<typeof createSchema>;
 export type FoodCategoryUpdate = z.infer<typeof updateSchema>;
 
-const config: ResourceConfig<food_categoriesModel, FoodCategoryCreate, FoodCategoryUpdate> = {
+export const config: ResourceConfig<food_categoriesModel, FoodCategoryCreate, FoodCategoryUpdate> = {
   name: 'food category',
   path: 'food-categories',
   delegate: prisma.food_categories as unknown as PrismaDelegate<food_categoriesModel>,

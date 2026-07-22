@@ -23,7 +23,7 @@ const updateSchema = createSchema.omit({ delivery_status: true }).partial();
 export type DeliveryCreate = z.infer<typeof createSchema>;
 export type DeliveryUpdate = z.infer<typeof updateSchema>;
 
-const config: ResourceConfig<deliveriesModel, DeliveryCreate, DeliveryUpdate> = {
+export const config: ResourceConfig<deliveriesModel, DeliveryCreate, DeliveryUpdate> = {
   name: 'delivery',
   path: 'deliveries',
   delegate: prisma.deliveries as unknown as PrismaDelegate<deliveriesModel>,

@@ -73,6 +73,25 @@ export function OrderTracking() {
         })
       ).data.data,
   })
+  const itemIds = [
+    ...new Set(
+      (itemsQuery.data ?? [])
+        .map((it) => it.item_id)
+        .filter((id): id is number => id !== null),
+    ),
+  ]
+  const menuItemsQuery = useQuery({
+    queryKey: ['order-item-names', itemIds],
+    queryFn: async () => {
+      const results = await Promise.all(
+        itemIds.map((itemId) =>
+          api.get<ItemResponse<{ item_id: number; item_name: string }>>(`/menu-items/${itemId}`),
+        ),
+      )
+      return new Map(results.map((res) => [res.data.data.item_id, res.data.data.item_name]))
+    },
+    enabled: itemIds.length > 0,
+  })
 
   // When a live event arrives, refetch the authoritative records.
   useEffect(() => {
@@ -165,7 +184,9 @@ export function OrderTracking() {
           {(itemsQuery.data ?? []).map((it) => (
             <li key={it.order_item_id} className="flex justify-between py-2 text-sm">
               <span>
-                {it.quantity} × item #{it.item_id}
+                {it.quantity} ×{' '}
+                {(it.item_id !== null && menuItemsQuery.data?.get(it.item_id)) ||
+                  `item #${it.item_id}`}
               </span>
               <span className="font-medium">
                 {formatMoney(Number(it.price) * Number(it.quantity))}
